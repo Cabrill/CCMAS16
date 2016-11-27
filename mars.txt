@@ -1,0 +1,12 @@
+F8 C4 C A3 C C3 A C4 A C8 C A C D C A
+C C A C C A C A8 C A C A C D C A
+A#8 A A# A A# A A# C F F F G A
+F C C A8 C C A C A C4 C A4 C D C A
+C C A C C A C A C A C A C D C A
+C3 C8 F G A F C8 F G A G F4 G F
+C F G A G A# A F G F
+C F8 G A C F G A G F4 G F F
+C3 F G A G A# A8 F G F
+C C A C8 C A C A C8 C A4 C D C A
+C C8 A C C A C A C A C A C D4 C A4
+A# A A# A A# A A# C6 F F8 F G A
