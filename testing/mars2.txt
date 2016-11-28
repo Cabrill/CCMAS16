@@ -8,4 +8,3 @@ C C8 A g2f2 e2d2 c2ec C C A C A C A C A C D4 C A4
 A# A A# A dedB dedB dedB c2ec  A# A A# C6 F F8 F G A
 CDD E  EG CD   DEF D D3 A  CDD_E EGCD  DEFA
 A B B C C E A BB CDBA BCDE
-Bb7 z8  Bb7 z8  F7 z8 Am7 z4 D7 z4
