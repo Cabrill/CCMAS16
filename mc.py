@@ -15,38 +15,6 @@ import random
 
 import os
 
-def getAlice():
-    # Download Alice's Adventures in Wonderland if it is not yet present
-    alice_file = 'alice.txt'
-    alice_raw = None
-
-    if not os.path.isfile(alice_file):
-        from urllib import request
-        url = 'http://www.gutenberg.org/cache/epub/19033/pg19033.txt'
-        response = request.urlopen(url)
-        alice_raw = response.read().decode('utf8')
-        with open(alice_file, 'w', encoding='utf8') as f:
-            f.write(alice_raw)
-    else:
-        with open(alice_file, 'r', encoding='utf8') as f:
-            alice_raw = f.read()
-
-    # Remove the start and end bloat from Project Gutenberg (this is not exact, but
-    # easy).
-    pattern = 'I--DOWN THE RABBIT-HOLE'
-    end = "End of the Project Gutenberg"
-    start_match = re.search(pattern, alice_raw)
-    if start_match:
-        start_index = start_match.span()[1] + 1
-    else:
-        start_index = 0
-    end_index = alice_raw.rfind(end)
-    alice = alice_raw[start_index:end_index]
-
-    # And replace more than one subsequent whitespace chars with one space
-    alice = re.sub(r'\s+', ' ', alice)
-    return alice;
-
 def sanitize(token_list):
     '''
     Sanitizes a token list by only accepting valid words,
@@ -297,16 +265,3 @@ def markov_chain(raw_text, should_sanitize=True, order=1):
             probs[pred][succ] = count / totals[pred]
 
     return probs, transitions
-
-#This is test calls to each method, using the below test text for model building
-#original_text = "This is a test, this is only a test.  Do not pay attention to the words in this test.  If this were not a test then something would happen."
-#The resulting model is stored from analysis
-#result = markov_chain(original_text, True, 1)
-#result = markov_chain(getAlice(), True, 6)
-#We generate new text using the model
-#new = generate(result,20)
-#Print out the generated text
-#print(new)
-#And then print the probability of that text having occurred
-#print(new)
-#print(likelihood(new, result))

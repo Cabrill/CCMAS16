@@ -1,2 +1,0 @@
-How can I write a MIDI file with Python?
-http://stackoverflow.com/questions/11059801/how-can-i-write-a-midi-file-with-python
