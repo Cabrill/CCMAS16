@@ -6,7 +6,8 @@ Toy example of using `creamas <https://github.com/assamite/creamas/>`_ to build
 a multi-agent system.
 '''
 import logging,random,numpy,re,string,aiomas,nltk,os,subprocess, platform
-
+from os import listdir
+from os.path import isfile, join
 from collections import Counter
 from mc import markov_chain, generate, sanitize, determineOrder, likelihood, format_for_printing
 from list_mem import ListMemory
@@ -395,38 +396,60 @@ def getTextFromFile(filename):
     raw_text = re.sub(r'\s+', ' ', raw_text)
     return raw_text;
     
+def read_text(self, mypath="InspiringSet/"):
+    text_files = [f  for f in listdir(mypath) if isfile(join(mypath, f))]
+    return text_files
+    
 if __name__ == "__main__":
     logger.info("Initializing environment and agent data...")
+    
+    #Set Inspiring Set path (location of TXT files)
+    path = "InspiringSet/"
+    
+    #Set the memory length and voting rounds
+    list_memory = 25
+    voting_rounds = 1000
+    num_agents = 5
+    
     #Create the simulation environment
     env = ToyEnvironment.create(('localhost', 5555), codec=aiomas.MsgPack, extra_serializers=[get_artifact_ser])
     
     #Create a service agent
     server = ServiceAgent(env)
     
-    #Set the memory length
-    list_memory = 25
-    voting_rounds = 1000
-    
     #Create a music helper for determining scales
     helper = MusicHelper()
     
-    #Learn the Markov Chains from the text
-    fnalice = 'InspiringSet/alice.txt'
-    fnwap = 'InspiringSet/warandpeace.txt'
-    fncotw = 'InspiringSet/callofthewild.txt'
+    #Check for available text
+    text_file_list = read_text(path)
+    num_text = len(text_file_list)
     
-    logger.info("Reading 'Alice in Wonderland'...")
-    alicemc, alicest = markov_chain(getTextFromFile(fnalice), True, 1)
-    logger.info("Reading 'War and Peace'...")
-    wapmc, wapst = markov_chain(getTextFromFile(fnwap), True, 1)
-    logger.info("Reading 'Call of the Wild'...")
-    cotwmc, cotwst = markov_chain(getTextFromFile(fncotw), True, 1)
+    if num_text < 1:
+        raise ValueError("No text was found in the '" + path + "' location.")
     
-    #Create
-    agent = ToyAgent(env, alicemc, alicest, helper, list_memory, server.addr)
-    agent = ToyAgent(env, wapmc, wapst, helper, list_memory, server.addr)
-    agent = ToyAgent(env, cotwmc, cotwst, helper, list_memory, server.addr)
+    if num_agents < num_text:
+        agents_per_text = 1
+    else:
+        agents_per_text = int(num_agents / num_text)
+
+    for text_file in text_file_list:
+        if len(env.get_agents()) < num_agents:
+            logger.info("Reading '"+text_file+"'...")
+            fqpn = path + text_file
+            #Read the text data
+            text_read = getTextFromFile(fqpn)
+            #Learn the Markov Chains from the text
+            textmc, textst = markov_chain(text_read)
+            
+            for i in range(0, agents_per_text):
+                if len(env.get_agents()) < num_agents:
+                    print("Creating an agent for " + text_file)
+                    ToyAgent(env, textmc, textst, helper, list_memory, server.addr)
     
+    while len(env.get_agents()) < num_agents:
+        print("Creating leftover agents for " + text_file)
+        ToyAgent(env, textmc, textst, helper, list_memory, server.addr)
+
     #Start the simulation
     sim = Simulation(env, log_folder='logs', callback=env.vote)
     logger.info("Initialization complete!  Starting simulation...")
