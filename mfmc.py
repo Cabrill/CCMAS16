@@ -24,28 +24,6 @@ from music_agent import MusicAgent
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.DEBUG)
-
-def levenshtein(s, t):
-        '''Compute the edit distance between two strings.
-
-        From Wikipedia article; Iterative with two matrix rows.
-        '''
-        if s == t: return 0
-        elif len(s) == 0: return len(t)
-        elif len(t) == 0: return len(s)
-        v0 = [None] * (len(t) + 1)
-        v1 = [None] * (len(t) + 1)
-        for i in range(len(v0)):
-            v0[i] = i
-        for i in range(len(s)):
-            v1[0] = i + 1
-            for j in range(len(t)):
-                cost = 0 if s[i] == t[j] else 1
-                v1[j + 1] = min(v1[j] + 1, v0[j + 1] + 1, v0[j] + cost)
-            for j in range(len(v0)):
-                v0[j] = v1[j]
-
-        return v1[len(t)]
     
 class ServiceAgent(CreativeAgent):
     '''Agent which defines a service for other agents to use.
@@ -78,9 +56,10 @@ class ToyEnvironment(Environment):
             accepted = artifacts[0][0]
             accepted_value = artifacts[0][1]
             self.add_artifact(accepted) # Add vote winner to domain
-            formatted_result = format_for_printing(accepted.obj[0]) + "\n" + str(accepted.obj[1])
-            logger.info("Vote winner by {}: {} (val={})"
-                        .format(accepted.creator, formatted_result, accepted_value))
+            lyrics = accepted.obj[0]
+            theme = accepted.obj[1]
+            logger.info("Winning song created by: {} \nLyrics:{} \nTheme based on: {} \n(val={})"
+                        .format(accepted.creator, lyrics, theme, accepted_value))
         else:
             logger.info("No vote winner!")
 
@@ -90,10 +69,15 @@ class ToyEnvironment(Environment):
         input("Playing artifact's music.  Press a key for next voting round...")
         
     def save_midi(self, artifact):
-        notes = artifact.obj[1]
-        midi = Midi(1, tempo=90)
-        midi.seq_notes(notes, track=0)
-        file_name = "result" + str(self.age) + ".mid"
+        track_list = artifact.obj[3]
+        music_theme = artifact.obj[2]
+        word_theme = artifact.obj[1]
+        
+        midi = Midi(number_tracks = len(track_list), tempo=music_theme[0], instrument=music_theme[1])
+        for i in range(0, len(track_list)):
+            midi.seq_notes(track_list[i], track=i)
+        
+        file_name = word_theme + str(self.age) + ".mid"
         midi.write(file_name)
         return file_name
         
