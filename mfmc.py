@@ -110,7 +110,7 @@ def getTextFromFile(filename):
     return raw_text;
     
 def read_text(self, mypath="InspiringSet/"):
-    text_files = [f  for f in listdir(mypath) if isfile(join(mypath, f))]
+    text_files = [f  for f in listdir(mypath) if isfile(join(mypath, f)) and str(f).endswith(".txt")]
     return text_files
     
 if __name__ == "__main__":
