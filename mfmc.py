@@ -60,6 +60,11 @@ class ToyEnvironment(Environment):
             theme = accepted.obj[1]
             logger.info("Winning song created by: {} \nLyrics:{} \nTheme based on: {} \n(val={})"
                         .format(accepted.creator, lyrics, theme, accepted_value))
+                        
+            if (theme == "random"):
+                logger.info("Tempo: " + str(accepted.obj[2][0]))
+                logger.info("Instrument 1: " + str(accepted.obj[2][1][0]) )
+                logger.info("Instrument 2: " + str(accepted.obj[2][1][1]) )
         else:
             logger.info("No vote winner!")
 

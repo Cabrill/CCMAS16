@@ -90,3 +90,7 @@ ENV/
 
 # MIDI files
 *.mid
+
+#XML files
+*.zml
+*.iml
