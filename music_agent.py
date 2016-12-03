@@ -313,6 +313,10 @@ class MusicAgent(CreativeAgent):
                 insert_rest = (longest_duration - this_track_duration) / 2
                 track_list[i].insert(0,Rest(insert_rest))
                 track_list[i].append(Rest(insert_rest))
+            
+            #Add a 1 second pause to the end of the longest track so it ends gracefully
+            if this_track_duration == longest_duration:
+                track_list[i].insert(0,Rest(1))
         
         #Find a word that will provide a theme for the song
         music_theme = None
