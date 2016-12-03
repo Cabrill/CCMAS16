@@ -157,37 +157,259 @@ class MusicHelper:
         :returns: A tuple containing tempo and a list of MIDI instruments in int format.
         '''
         #Filter out meaningless words
-        if word in "and from say her him his she had the their for one":
+        if word in "and from say her him his she had the their for one you all":
             return None
         if word in "children kids young baby youth age kid bosom asleep nap quiet silence discovery learn education "\
                     "find taught teacher lesson boy girl":
-            return (160,[76, 11]) #76-Pan Flute, 11-Music Box
+            return (160,[75, 10]) #76-Pan Flute, 11-Music Box
             
         if word in "sky nature tree forest earth weather rain wind cloud drizzle mist atmosphere air bird "\
                     "tweet nest egg flight breasted morning sunrise day explore happy happiness calmly freshest":
-            return (180, [100, 123]) #100-Atmosphere, 123-Seashore
+            return (180, [99, 122]) #100-Atmosphere, 123-Seashore
         
         if word in "olden yearning ancients timely slowing pine wishing wistful lonely harkening past year month long ago "\
                     "true truly travel men night":
-            return (140, [110, 90]) #110-Bagpipe, 90-Warm synth
+            return (140, [109, 89]) #110-Bagpipe, 90-Warm synth
             
         if word in "evil danger primal attacked attacking offense enemy dungeon wounded bleed blood murder"\
                     "death kill festering mortal peril endangered threatened ":
-            return (300,[31, 86]) #31-Distortion Guitar, 86-Voice
+            return (300,[30, 85]) #31-Distortion Guitar, 86-Voice
         
         if word in "voices angels choir holy blessing prayer blessed fortunate fortune lucky benefit boon "\
                     "lucked chance godly heavenly golden happily peace above":
-            return (180,[49, 53]) #49-String Ensemble, 53-Choir Ahs
+            return (180,[48, 52]) #49-String Ensemble, 53-Choir Ahs
             
         if word in "guitar solo rocked rocking tune played song strummed picked heard bass electric music":
-            return (240, [26, 33]) #26-Steel guitar,  33-Acoustic bass
+            return (240, [25, 32]) #26-Steel guitar,  33-Acoustic bass
             
         if word in "native indigenous locally primitive folklore community social friendly smallest society "\
                     "farming garden landscape enjoyment enjoyed relaxed relaxation relaxing peaceful satisfied":
-            return (160, [78, 116]) #78-Shakuhachi, 116-Woodblock
+            return (160, [78, 116]) #79-Whistle, 117-Taiko Drum
         
         if word == "random":
             random_tempo = random.randint(120,250)
             random_instr1 = random.randint(1, 127)
             random_instr2 = random.randint(1, 127)
             return (random.randint(60,180), [random_instr1, random_instr2])
+
+    @staticmethod  
+    def determine_instrument(midi_int):
+        #Add one because our MIDI writer uses 0-based index
+        midi_int = midi_int + 1
+        
+        #Set the default
+        category = 'None'
+        instrument = 'None'
+        
+        if  midi_int < 1 or midi_int > 128:
+            return type_instrument
+        
+        if midi_int <= 8: 
+            category = 'Piano'
+            instrument = {
+                1 : 'Acoustic Grand Piano',
+                2 : 'Bright Acoustic Piano',
+                3 : 'Electric Grand Piano',
+                4 : 'Honky-tonk Piano',
+                5 : 'Electric Piano 1',
+                6 : 'Electric Piano 2',
+                7 : 'Harpsichord',
+                8 : 'Clavinet'
+            }[midi_int]
+        elif midi_int <= 16:
+            category = 'Chromatic Percussion'
+            instrument = {
+                9  : 'Celesta',
+                10 : 'Glockenspiel',
+                11 : 'Music Box',
+                12 : 'Vibraphone',
+                13 : 'Marimba',
+                14 : 'Xylophone',
+                15 : 'Tubular Bells',
+                16 : 'Dulcimer'
+            }[midi_int]
+
+        elif midi_int <= 24:
+            category = 'Organ'
+            instrument = {
+                17 : 'Drawbar Organ',
+                18 : 'Percussive Organ',
+                19 : 'Rock Organ',
+                20 : 'Church Organ',
+                21 : 'Reed Organ',
+                22 : 'Accordion',
+                23 : 'Harmonica',
+                24 : '*Tango Accordion'
+            }[midi_int]
+
+        elif midi_int <= 32:
+            category = 'Guitar'
+            instrument = {
+                25 : 'Acoustic Guitar (nylon)',
+                26 : 'Acoustic Guitar (steel)',
+                27 : 'Electric Guitar (jazz)',
+                28 : 'Electric Guitar (clean)',
+                29 : 'Electric Guitar (muted)',
+                30 : 'Overdriven Guitar',
+                31 : 'Distortion Guitar',
+                32 : 'Guitar harmonics'
+            }[midi_int]
+
+        elif midi_int <= 40:
+            category = 'Bass'
+            instrument = {
+                33 : 'Acoustic Bass',
+                34 : 'Electric Bass (finger)',
+                35 : 'Electric Bass (pick)',
+                36 : 'Fretless Bass',
+                37 : 'Slap Bass 1',
+                38 : 'Slap Bass 2',
+                39 : 'Synth Bass 1',
+                40 : 'Synth Bass 2'
+            }[midi_int]
+            
+        elif midi_int <= 52:
+            category = 'Strings'
+            instrument = {        
+                41 : 'Violin',
+                42 : 'Viola',
+                43 : 'Cello',
+                44 : 'Contrabass',
+                45 : 'Tremolo Strings',
+                46 : 'Pizzicato Strings',
+                47 : 'Orchestral Harp',
+                48 : 'Timpani',
+                49 : 'String Ensemble 1',
+                50 : 'String Ensemble 2',
+                51 : 'Synth Strings 1',
+                52 : 'Synth Strings 2'
+            }[midi_int]
+        
+        elif midi_int <= 56:
+            category = 'Voice'
+            instrument = {   
+                53 : 'Choir Aahs',
+                54 : 'Voice Oohs',
+                55 : 'Synth Voice',
+                56 : 'Orchestra Hit'
+            }[midi_int]
+
+        elif midi_int <= 64:
+            category = 'Brass'
+            instrument = {  
+                57 : 'Trumpet',
+                58 : 'Trombone',
+                59 : 'Tuba',
+                60 : 'Muted Trumpet',
+                61 : 'French Horn',
+                62 : 'Brass Section',
+                63 : 'Synth Brass 1',
+                64 : 'Synth Brass 2'
+            }[midi_int]
+
+
+        elif midi_int <= 72:
+            category = 'Reed'
+            instrument = {  
+                65 : 'Soprano Sax',
+                66 : 'Alto Sax',
+                67 : 'Tenor Sax',
+                68 : 'Baritone Sax',
+                69 : 'Oboe',
+                70 : 'English Horn',
+                71 : 'Bassoon',
+                72 : 'Clarinet'
+            }[midi_int]
+
+        elif midi_int <= 80:
+            category = 'Pipe'
+            instrument = {  
+                73 : 'Piccolo',
+                74 : 'Flute',
+                75 : 'Recorder',
+                76 : 'Pan Flute',
+                77 : 'Blown Bottle',
+                78 : 'Shakuhachi',
+                79 : 'Whistle',
+                80 : 'Ocarina'
+            }[midi_int]
+
+        elif midi_int <= 88:
+            category = 'Synth Lead'
+            instrument = { 
+                81 : 'Square',
+                82 : 'Sawtooth',
+                83 : 'Calliope',
+                84 : 'Chiff',
+                85 : 'Charang',
+                86 : 'Voice',
+                87 : 'Fifths',
+                88 : '(Bass + Lead)'
+            }[midi_int]
+
+        elif midi_int <= 96:
+            category = 'Synth Pad'
+            instrument = { 
+                89 : 'New age',
+                90 : 'Warm',
+                91 : 'Polysynth',
+                92 : 'Choir',
+                93 : 'Bowed',
+                94 : 'Metallic',
+                95 : 'Halo',
+                96 : 'Sweep'
+            }[midi_int]
+
+        elif midi_int <= 104:
+            category = 'Synth Effects'
+            instrument = { 
+                97 : 'Rain',
+                98 : 'Soundtrack',
+                99 : 'Crystal',
+                100 : 'Atmosphere',
+                101 : 'Brightness',
+                102 : 'Goblins',
+                103 : 'Echoes',
+                104 : 'Sci-fi'
+            }[midi_int]
+
+        elif midi_int <= 112:
+            category = 'Ethnic'
+            instrument = { 
+                105 : 'Sitar',
+                106 : 'Banjo',
+                107 : 'Shamisen',
+                108 : 'Koto',
+                109 : 'Kalimba',
+                110 : 'Bag pipe',
+                111 : 'Fiddle',
+                112 : 'Shanai'
+            }[midi_int]
+        
+        elif midi_int <= 119:
+            category = 'Percussive'
+            instrument = { 
+                113 : 'Tinkle Bell',
+                114 : 'Agogo',
+                115 : 'Steel Drums',
+                116 : 'Woodblock',
+                117 : 'Taiko Drum',
+                118 : 'Melodic Tom',
+                119 : 'Synth Drum'
+            }[midi_int]
+
+        else:
+            category = 'Sound Effect'
+            instrument = { 
+                120 : 'Reverse Cymbal',
+                121 : 'Guitar Fret Noise',
+                122 : 'Breath Noise',
+                123 : 'Seashore',
+                124 : 'Bird Tweet',
+                125 : 'Telephone Ring',
+                126 : 'Helicopter',
+                127 : 'Applause',
+                128 : 'Gunshot'
+            }[midi_int]
+        
+        return (category, instrument)
