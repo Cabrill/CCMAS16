@@ -246,26 +246,27 @@ class MusicHelper:
         :returns: A tuple containing tempo and a list of MIDI instruments in int format.
         '''
         #Filter out meaningless words
-        if word in "and from say her him his she had the their for one you all":
+        if word in "and from say her him his she had the their for one your all out ass are":
             return None
         if word in "children kids young baby youth age kid bosom asleep nap quiet silence discovery learn education "\
-                    "find taught teacher lesson boy girl":
+                    "find taught teacher lesson boy girl imagination imagine":
             return (160,[75, 10, 15]) #76-Pan Flute, 11-Music Box, 16-Dulcimer
             
-        if word in "sky nature tree forest earth weather rain wind cloud drizzle mist atmosphere air bird "\
-                    "tweet nest egg flight breasted morning sunrise day explore happy happiness calmly freshest":
+        if word in "sky nature tree forest earth atmosphere air bird "\
+                    "tweet nest egg flight breasted morning sunrise day explore happy happiness calmly freshest "\
+                    "sail boat ocean sea pelican seagulls wings Captain sailors ship starboard port dock feathers":
             return (180, [99, 122, 123]) #100-Atmosphere, 123-Seashore, 124-Bird Tweet
         
-        if word in "olden yearning ancients timely slowing pine wishing wistful lonely harkening past year month long ago "\
-                    "true truly travel men night":
+        if word in "olden yearning ancients timely slowing pine wishing wistful lonely harkening past year long ago "\
+                    "true truly travel men return":
             return (140, [109, 89, 117]) #110-Bagpipe, 90-Warm synth, 118-Melodic Drum
             
         if word in "evil danger primal attacked attacking offense enemy dungeon wounded bleed blood murder"\
                     "death kill festering mortal peril endangered threatened ":
-            return (300,[30, 85, 114]) #31-Distortion Guitar, 86-Voice, 115-Steel drums
+            return (600,[30, 85, 114]) #31-Distortion Guitar, 86-Voice, 115-Steel drums
         
         if word in "voices angels choir holy blessing prayer blessed fortunate fortune lucky benefit boon "\
-                    "lucked chance godly heavenly golden happily peace above":
+                    "lucked chance godly heavenly golden happily peace above gods divine Christmas":
             return (180,[48, 52, 98]) #49-String Ensemble, 53-Choir Ahs, 99-Crystal
             
         if word in "guitar solo rocked rocking tune played song strummed picked heard bass electric music":
@@ -276,14 +277,42 @@ class MusicHelper:
             return (160, [78, 12, 116]) #79-Whistle, 13-Marimba, 117-Taiko Drum
             
         if word in "clock minutes hours seconds chronological timely":
-            return (160, [13, 13, 116]) #14-Tubular Bells, 14-xylophone, 117-Taiko drum
+            return (160, [14, 13, 116]) #15-Tubular Bells, 14-xylophone, 117-Taiko drum
+            
+        if word in "strings wind breeze orchestra elegant elegance somber precision ritz class impressive":
+            return (120, [40, 42, 46]) #40-Violin, 43-Cello, 47-Harp
+            
+        if word in "moon mystical nighttime dusk evening stars stargazing space planets sense traveler alien atmosheric"\
+                    "strata radiation phenomenon shone sparkle shining distant":
+            return (160, [85, 88, 13]) #86-Voice, , 89-New Age, 14-Xylophone
+            
+        if word in "rusty broken cracked failing abused large fallen abandon dismayed":
+            return (180, [22, 70, 58]) #23-Harmonica, 71-Bassoon, 59-Tuba
         
-        if word == "random":
-            random_tempo = random.randint(120,250)
-            random_instr1 = random.randint(1, 114)
-            random_instr2 = random.randint(1, 127)
-            random_instr3 = random.randint(113, 121)
-            return (random.randint(60,180), [random_instr1, random_instr2, random_instr3])
+        if word in "adventure encounter showdown lingering nearby thousand circles":
+            return (200, [44, 18, 119]) #45-Tremolo Strings, 19-Rock Organ, 120-Reverse Cymbal
+        
+        if word in "aqueduct river stream flowing filled filling splashing swimming liquid dripping water flooded "\
+                    "spilling drenched soaking soaked moistened slick puddles puddling drenching weather rain wind cloud "\
+                    "drizzle mist ":
+            return (140, [31, 97, 123]) #32-Guitar harmonics, 97-Rain, 123-Seashore
+         
+        if word in "cheerful happy pleasant jolly happiness joyful carefree":
+            return (120, [79, 75, 76]) #80-Ocarina, 76-Pan flute, 77-Blown bottle
+            
+        if word in "alien terrifying terror frightening ghastly abomination creature predator beastly foul scared"\
+                    "foreign":
+            return (600, [126, 103, 127]) #127-Goblins, 104-Scifi, 128-Gunshots
+        
+        if word in "mountains rocks entombed cliffside canyons boulders plateau deserted cactus":
+            return (240, [71, 81, 114])#72 - Clarinet, 82-Sawtooth, 115-Steel Drums
+        
+        if word in "random lunatics crazy gibberish crazed bizarre bewildering nonsense unknowable":
+            random_tempo = random.randint(120,250) 
+            random_instr1 = random.randint(1, 114) #Random lead instrument
+            random_instr2 = random.randint(1, 127) #Random anything
+            random_instr3 = random.randint(113, 121) #Random percussion
+            return (random_tempo, [random_instr1, random_instr2, random_instr3])
 
     @staticmethod  
     def determine_instrument(midi_int):
@@ -338,7 +367,7 @@ class MusicHelper:
                 21 : 'Reed Organ',
                 22 : 'Accordion',
                 23 : 'Harmonica',
-                24 : '*Tango Accordion'
+                24 : 'Tango Accordion'
             }[midi_int]
 
         elif midi_int <= 32:

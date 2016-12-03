@@ -236,9 +236,11 @@ class MusicAgent(CreativeAgent):
                 word_ptr = i
                 word_for_note = lyric_words[word_ptr]
                 
-                #Set notes duration based on word length
-                notes[i].dur = len(word_for_note) * 0.25
-                lead_track.append(notes[i])
+                #Exclude punctuation in lead track
+                if word_for_note not in (',', '.', ';', '!', '?', '"', ':', '/', '\\'):
+                    #Set notes duration based on word length
+                    notes[i].dur = len(word_for_note) * 0.25
+                    lead_track.append(notes[i])
             else:
                 other_notes.append(notes[i])
                 
