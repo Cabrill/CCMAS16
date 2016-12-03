@@ -1,4 +1,4 @@
-import pyknon, operator, numpy, random, nltk
+import pyknon, operator, numpy, random, nltk, math
 from os import listdir
 from os.path import isfile, join
 from pyknon.music import NoteSeq, Rest
@@ -155,13 +155,13 @@ class MusicHelper:
         #Remove the sentence token after the final .
         del lyrics_sentences[-1]
         num_sentences = len(lyrics_sentences)
-
+        
         track_list = list()
         #Skip first sentence, as the Lead track will be based on it already
         #otherwise create a track for each sentence
         for i in range(1, num_sentences):
             #Count the words in this sentence
-            lyric_words = nltk.word_tokenize(lyrics)
+            lyric_words = nltk.word_tokenize(lyrics_sentences[i])
             num_words = len(lyric_words)
             #Count the number of characters in each word
             list_of_char_counts = list()
@@ -170,21 +170,43 @@ class MusicHelper:
             num_chars_total = sum([cnt for cnt in list_of_char_counts])
 
             #Give notes equal time, in accordance with represented word length, plus time for rests
-            duration_unit = (track_duration / (num_words  * num_chars_total)) - (num_words)
-            
+            duration_unit = math.floor(((track_duration / (num_words  * num_chars_total)) - (num_words))/0.25) * 0.25
+
             #Every other track picks a pattern length differently
             if i % 2 == 0:
                 pattern_length = list_of_char_counts[0]
-                pattern_accent = list_of_char_counts[1]
-                accent_occur = list_of_char_counts[2]
+                if len(list_of_char_counts) > 1:
+                    pattern_accent = list_of_char_counts[1]
+                else:
+                    pattern_accent = ord(lyric_words[0][0]) % 43
+                if len(list_of_char_counts) > 2:
+                    accent_occur = list_of_char_counts[2]
+                elif len(lyric_words[0]) > 1:
+                    accent_occur = ord(lyric_words[0][1]) % 43
+                else:
+                    accent_occur = 1
                 inversion_accent = (accent_occur + pattern_accent) % 3
                 inversion_occur = (pattern_length + pattern_accent) // 2
             else:
                 pattern_length = list_of_char_counts[-1]
-                pattern_accent = list_of_char_counts[-2]
-                accent_occur = list_of_char_counts[-3]
+                if len(list_of_char_counts) > 1:
+                    pattern_accent = list_of_char_counts[-2]
+                else:
+                    pattern_accent = ord(lyric_words[-1][0]) % 43
+                if len(list_of_char_counts) > 2:
+                    accent_occur = list_of_char_counts[-3]
+                elif len(lyric_words[0]) > 1:
+                    accent_occur = ord(lyric_words[-1][-1]) % 43
+                else:
+                    accent_occur = 1
                 inversion_accent = (pattern_length + pattern_accent) % 3
                 inversion_occur = (accent_occur + pattern_accent) // 2
+                
+            #Ensure we got no 0 values from mod operations
+            pattern_accent = max(1, pattern_accent)
+            accent_occur = max(1, accent_occur)
+            inversion_accent = max(1, inversion_accent)
+            inversion_occur = max(1, inversion_occur)
             
             #Repeat the pattern equal to the number of words in the sentence
             this_track = NoteSeq()
@@ -209,7 +231,7 @@ class MusicHelper:
             
             #Add the completed track
             track_list.append(this_track)
-            
+
         return track_list
     
     @staticmethod
@@ -252,12 +274,15 @@ class MusicHelper:
         if word in "native indigenous locally primitive folklore community social friendly smallest society "\
                     "farming garden landscape enjoyment enjoyed relaxed relaxation relaxing peaceful satisfied":
             return (160, [78, 12, 116]) #79-Whistle, 13-Marimba, 117-Taiko Drum
+            
+        if word in "clock minutes hours seconds chronological timely":
+            return (160, [13, 13, 116]) #14-Tubular Bells, 14-xylophone, 117-Taiko drum
         
         if word == "random":
             random_tempo = random.randint(120,250)
-            random_instr1 = random.randint(1, 127)
+            random_instr1 = random.randint(1, 114)
             random_instr2 = random.randint(1, 127)
-            random_instr3 = random.randint(1, 127)
+            random_instr3 = random.randint(113, 121)
             return (random.randint(60,180), [random_instr1, random_instr2, random_instr3])
 
     @staticmethod  

@@ -246,7 +246,7 @@ class MusicAgent(CreativeAgent):
         rest_count = 0
         for i in range(0, len(lead_track)):
             if lyric_words[i] in (',', '.', ';', '!', '?', '"', ':', '/', '\\'):
-                lead_track.insert(i+rest_count, Rest())
+                lead_track.insert(i+rest_count, Rest(2))
                 rest_count = rest_count + 1
         
         #See how long the lead track is, then add it
