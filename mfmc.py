@@ -62,10 +62,13 @@ class ToyEnvironment(Environment):
                         .format(accepted.creator, lyrics, theme, accepted_value))
 
             logger.info("Tempo: " + str(accepted.obj[2][0]))
+            logger.info("Tracks: "+ str(len(accepted.obj[3])))
             instr1 = MusicHelper.determine_instrument(accepted.obj[2][1][0])
             instr2 = MusicHelper.determine_instrument(accepted.obj[2][1][1])
+            instr3 = MusicHelper.determine_instrument(accepted.obj[2][1][2])
             logger.info("Instrument 1: " + str(accepted.obj[2][1][0]) + " " + instr1[0] + "-" + instr1[1])
-            logger.info("Instrument 2: " + str(accepted.obj[2][1][1]) + " " + instr1[1] + "-" + instr2[1])
+            logger.info("Instrument 2: " + str(accepted.obj[2][1][1]) + " " + instr2[0] + "-" + instr2[1])
+            logger.info("Instrument 3: " + str(accepted.obj[2][1][2]) + " " + instr3[0] + "-" + instr3[1])
         else:
             logger.info("No vote winner!")
 
