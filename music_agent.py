@@ -268,7 +268,7 @@ class MusicAgent(CreativeAgent):
             #If there aren't enough notes, copy some from the lead track
             if num_notes < 4:
                 lead_length = len(lead_track)
-                for i in range(lead_length-1,lead_length-10, -1):
+                for i in range(lead_length-1,lead_length-8, -1):
                     other_notes.append(lead_track[i])
                 num_notes = len(other_notes)
                 
