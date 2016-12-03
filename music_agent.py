@@ -196,7 +196,7 @@ class MusicAgent(CreativeAgent):
         :returns: a string of text wrapped as :class:`~creamas.core.artifact.Artifact`
         '''
         lyrics = ""
-        for i in range(0,2):
+        for i in range(0,3):
             text_length = random.randint(*self.wlen_limits)
             lyrics = lyrics + " " + format_for_printing(generate(self.MarkovChainProbs, text_length))
         lyrics = lyrics.strip()
@@ -220,35 +220,58 @@ class MusicAgent(CreativeAgent):
         music_key = self.music_helper.determine_dominant_key(derived_notes)
         notes = self.music_helper.conform_notes_to_key(derived_notes, music_key)
        
-        phrase_tokens = nltk.word_tokenize(lyrics)
-        phrase_len = len(phrase_tokens)
+        lyric_words = nltk.word_tokenize(lyrics)
+        phrase_len = len(lyric_words)
         note_len = len(notes)
         
         track_list = []
+        lead_track = NoteSeq()
+        other_notes = NoteSeq()
         
+        #Separate notes into lead track/others, assign word-based duration
         for i in range(0,note_len):
-            #Associate note with a word in the phrase,
-            #until we're out of words
-            
+            #Associate each note for the lead track with a word in the lyrics,
+            #until we're out of words, then put the rest in "other"
             if i < phrase_len:
-                if len(track_list) == 0:
-                    track_list.append(NoteSeq())
                 word_ptr = i
-                word_for_note = phrase_tokens[word_ptr]
-            
+                word_for_note = lyric_words[word_ptr]
+                
                 #Set notes duration based on word length
                 notes[i].dur = len(word_for_note) * 0.25
-                track_list[0].append(notes[i])
+                lead_track.append(notes[i])
             else:
-                if len(track_list) < 2:
-                    track_list.append(NoteSeq())
-                track_list[1].append(notes[i])
+                other_notes.append(notes[i])
+                
+        #Insert rests for lead track at punctuation marks
+        rest_count = 0
+        for i in range(0, len(lead_track)):
+            if lyric_words[i] in (',', '.', ';', '!', '?', '"', ':', '/', '\\'):
+                lead_track.insert(i+rest_count, Rest())
+                rest_count = rest_count + 1
         
-        #Now make the tracks equal in duration, so there isn't long silence
-        lead_track_duration = sum([note.dur for note in track_list[0]])
-        for i in range(1, len(track_list)):
+        #See how long the lead track is, then add it
+        lead_track_duration = sum([note.dur for note in lead_track])        
+        track_list.append(lead_track)
+        
+        #Now attempt to detect patterns in the lyrics in combination with the
+        #other notes, for the purpose of creating more tracks
+        if len(other_notes) > 3:
+            pattern_tracks = self.music_helper.derive_tracks_from_lyrics(lyrics, other_notes, lead_track_duration)
+            for i in range(0, len(pattern_tracks)):
+                track_list.append(pattern_tracks[i])
+                
+        #If there weren't enough notes for a second track, make a small accompaniment instead
+        if len(track_list) < 2:
             #Determine an ideal duration pattern length
-            num_notes = len(track_list[i])
+            num_notes = len(other_notes)
+            
+            #If there aren't enough notes, copy some from the lead track
+            if num_notes < 4:
+                lead_length = len(lead_track)
+                for i in range(lead_length-1,lead_length-10, -1):
+                    other_notes.append(lead_track[i])
+                num_notes = len(other_notes)
+                
             pattern_length = 8
             for potential_length in range(pattern_length, 1, -1):
                 if num_notes % potential_length == 0:
@@ -260,7 +283,7 @@ class MusicAgent(CreativeAgent):
             pattern_list = list()
             #Take the length of the words in the end of the phrase
             for p in range(phrase_len-1, phrase_len-pattern_length-1, -1):
-                word = phrase_tokens[p]
+                word = lyric_words[p]
                 pattern_list.append(len(word))
 
             pattern_sum = sum(int(x) for x in pattern_list)
@@ -271,8 +294,13 @@ class MusicAgent(CreativeAgent):
             #Assign note length based on derived word lengths
             for j in range(0, num_notes):
                 pat_idx = i % pattern_length
-                track_list[i][j].dur = pattern_list[pat_idx] * dur_value
+                other_notes.dur = pattern_list[pat_idx] * dur_value
+                
+            track_list.append(other_notes)
             
+        
+        #Now make the tracks equal in duration, so there isn't long silence
+        for i in range(1, len(track_list)):
             #Verify the length is right
             new_track_duration = sum([note.dur for note in track_list[i]])
             
@@ -291,7 +319,7 @@ class MusicAgent(CreativeAgent):
         for i in range(0, phrase_len):
             if music_theme != None:
                 break
-            word_theme = phrase_tokens[i]
+            word_theme = lyric_words[i]
             if len(word_theme) > 2:
                 music_theme = self.music_helper.determine_theme(word_theme)
         #No matching words were found, choose one at random

@@ -1,7 +1,7 @@
-import pyknon, operator, numpy, random
+import pyknon, operator, numpy, random, nltk
 from os import listdir
 from os.path import isfile, join
-from pyknon.music import NoteSeq
+from pyknon.music import NoteSeq, Rest
 
 
 class MusicHelper:
@@ -144,6 +144,55 @@ class MusicHelper:
                 new_note_list.append(new_note)
         
         return new_note_list
+        
+    def derive_tracks_from_lyrics(self, lyrics, notes, track_duration):
+        '''
+        Attempts to find patterns in lyrics to be paired with the given notes
+        to create new tracks of a specified duration
+        '''
+        num_notes = len(notes)
+        lyrics_sentences = lyrics.replace("?", ".").replace("!", ".").split(".")
+        #Remove the sentence token after the final .
+        del lyrics_sentences[-1]
+        num_sentences = len(lyrics_sentences)
+
+        track_list = list()
+        #Skip first sentence, as Lead track is based on it already
+        for i in range(1, num_sentences):
+            #Count the words in this sentence
+            lyric_words = nltk.word_tokenize(lyrics)
+            num_words = len(lyric_words)
+            #Count the number of characters in each word
+            list_of_char_counts = list()
+            for j in range(0,len(lyric_words)):
+                list_of_char_counts.append(len(lyric_words[j]))
+            num_chars_total = sum([cnt for cnt in list_of_char_counts])
+
+            #Give notes equal time, in accordance with represented word length, plus time for rests
+            duration_unit = (track_duration / (num_words  * num_chars_total)) - (num_words)
+            
+            #Every other track picks a pattern length differently
+            if i % 2 == 0:
+                pattern_length = list_of_char_counts[0]
+            else:
+                pattern_length = list_of_char_counts[-1]
+            
+            #Repeat the pattern equal to the number of words in the sentence
+            this_track = NoteSeq()
+            for n in range(0, num_words):
+                for m in range(0, pattern_length):                    
+                    note_to_append = m % num_notes
+                    duration_count = m % list_of_char_counts[n]
+                    note = notes[note_to_append]
+                    note.duration = duration_count * duration_unit
+                    this_track.append(note)
+                #Rest for a second between tracks
+                this_track.append(Rest(1))
+            
+            #Add the completed track
+            track_list.append(this_track)
+            
+        return track_list
     
     @staticmethod
     def determine_theme(word):
@@ -161,39 +210,46 @@ class MusicHelper:
             return None
         if word in "children kids young baby youth age kid bosom asleep nap quiet silence discovery learn education "\
                     "find taught teacher lesson boy girl":
-            return (160,[75, 10]) #76-Pan Flute, 11-Music Box
+            return (160,[75, 10, 15]) #76-Pan Flute, 11-Music Box, 16-Dulcimer
             
         if word in "sky nature tree forest earth weather rain wind cloud drizzle mist atmosphere air bird "\
                     "tweet nest egg flight breasted morning sunrise day explore happy happiness calmly freshest":
-            return (180, [99, 122]) #100-Atmosphere, 123-Seashore
+            return (180, [99, 122, 123]) #100-Atmosphere, 123-Seashore, 124-Bird Tweet
         
         if word in "olden yearning ancients timely slowing pine wishing wistful lonely harkening past year month long ago "\
                     "true truly travel men night":
-            return (140, [109, 89]) #110-Bagpipe, 90-Warm synth
+            return (140, [109, 89, 117]) #110-Bagpipe, 90-Warm synth, 118-Melodic Drum
             
         if word in "evil danger primal attacked attacking offense enemy dungeon wounded bleed blood murder"\
                     "death kill festering mortal peril endangered threatened ":
-            return (300,[30, 85]) #31-Distortion Guitar, 86-Voice
+            return (300,[30, 85, 114]) #31-Distortion Guitar, 86-Voice, 115-Steel drums
         
         if word in "voices angels choir holy blessing prayer blessed fortunate fortune lucky benefit boon "\
                     "lucked chance godly heavenly golden happily peace above":
-            return (180,[48, 52]) #49-String Ensemble, 53-Choir Ahs
+            return (180,[48, 52, 98]) #49-String Ensemble, 53-Choir Ahs, 99-Crystal
             
         if word in "guitar solo rocked rocking tune played song strummed picked heard bass electric music":
-            return (240, [25, 32]) #26-Steel guitar,  33-Acoustic bass
+            return (240, [25, 32, 117]) #26-Steel guitar,  33-Acoustic bass, 118-Melodic Tom
             
         if word in "native indigenous locally primitive folklore community social friendly smallest society "\
                     "farming garden landscape enjoyment enjoyed relaxed relaxation relaxing peaceful satisfied":
-            return (160, [78, 116]) #79-Whistle, 117-Taiko Drum
+            return (160, [78, 110, 116]) #79-Whistle, 110-Fiddle, 117-Taiko Drum
         
         if word == "random":
             random_tempo = random.randint(120,250)
             random_instr1 = random.randint(1, 127)
             random_instr2 = random.randint(1, 127)
-            return (random.randint(60,180), [random_instr1, random_instr2])
+            random_instr3 = random.randint(1, 127)
+            return (random.randint(60,180), [random_instr1, random_instr2, random_instr3])
 
     @staticmethod  
     def determine_instrument(midi_int):
+        '''
+        Static method that identifies a category and instrument for a given int representing a MIDI instrument.
+        
+        :param int midi_int: The int of the MIDI instrument
+        :returns: A tuple containing the category and instrument name for the given int.
+        '''
         #Add one because our MIDI writer uses 0-based index
         midi_int = midi_int + 1
         
