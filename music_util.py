@@ -251,7 +251,7 @@ class MusicHelper:
             
         if word in "native indigenous locally primitive folklore community social friendly smallest society "\
                     "farming garden landscape enjoyment enjoyed relaxed relaxation relaxing peaceful satisfied":
-            return (160, [78, 110, 116]) #79-Whistle, 110-Fiddle, 117-Taiko Drum
+            return (160, [78, 12, 116]) #79-Whistle, 13-Marimba, 117-Taiko Drum
         
         if word == "random":
             random_tempo = random.randint(120,250)
