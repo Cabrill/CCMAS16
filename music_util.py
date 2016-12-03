@@ -157,7 +157,8 @@ class MusicHelper:
         num_sentences = len(lyrics_sentences)
 
         track_list = list()
-        #Skip first sentence, as Lead track is based on it already
+        #Skip first sentence, as the Lead track will be based on it already
+        #otherwise create a track for each sentence
         for i in range(1, num_sentences):
             #Count the words in this sentence
             lyric_words = nltk.word_tokenize(lyrics)
@@ -174,8 +175,12 @@ class MusicHelper:
             #Every other track picks a pattern length differently
             if i % 2 == 0:
                 pattern_length = list_of_char_counts[0]
+                pattern_accent = list_of_char_counts[1]
+                accent_occur = list_of_char_counts[2]
             else:
                 pattern_length = list_of_char_counts[-1]
+                pattern_accent = list_of_char_counts[-2]
+                accent_occur = list_of_char_counts[-3]
             
             #Repeat the pattern equal to the number of words in the sentence
             this_track = NoteSeq()
@@ -185,6 +190,11 @@ class MusicHelper:
                     duration_count = m % list_of_char_counts[n]
                     note = notes[note_to_append]
                     note.duration = duration_count * duration_unit
+                    if m % accent_occur == 3:
+                        if m // accent_occur % 2 == 0:
+                            note.transposition(pattern_accent)
+                        else:
+                            note.transposition(-pattern_accent)
                     this_track.append(note)
                 #Rest for a second between tracks
                 this_track.append(Rest(1))

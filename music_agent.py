@@ -250,7 +250,7 @@ class MusicAgent(CreativeAgent):
                 rest_count = rest_count + 1
         
         #See how long the lead track is, then add it
-        lead_track_duration = sum([note.dur for note in lead_track])        
+        lead_track_duration = sum([note.dur for note in lead_track])      
         track_list.append(lead_track)
         
         #Now attempt to detect patterns in the lyrics in combination with the
@@ -297,22 +297,22 @@ class MusicAgent(CreativeAgent):
                 other_notes.dur = pattern_list[pat_idx] * dur_value
                 
             track_list.append(other_notes)
-            
-        
+                
         #Now make the tracks equal in duration, so there isn't long silence
+        longest_duration = lead_track_duration
         for i in range(1, len(track_list)):
-            #Verify the length is right
-            new_track_duration = sum([note.dur for note in track_list[i]])
-            
+            this_track_duration = sum([note.dur for note in track_list[i]])
+            if this_track_duration > longest_duration:
+                longest_duration = this_track_duration
+                
+        for i in range(0, len(track_list)):
+            #Calculate this track duration
+            this_track_duration = sum([note.dur for note in track_list[i]])
             #Add some rests before/during to make it centered
-            if new_track_duration < lead_track_duration:
-                insert_rest = (lead_track_duration - new_track_duration) / 2
+            if this_track_duration < longest_duration:
+                insert_rest = (longest_duration - this_track_duration) / 2
                 track_list[i].insert(0,Rest(insert_rest))
                 track_list[i].append(Rest(insert_rest))
-            elif new_track_duration > lead_track_duration:
-                insert_rest = (new_track_duration - lead_track_duration) / 2
-                track_list[0].insert(0,Rest(insert_rest))
-                track_list[0].append(Rest(insert_rest))
         
         #Find a word that will provide a theme for the song
         music_theme = None
