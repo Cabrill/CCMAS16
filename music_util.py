@@ -145,23 +145,24 @@ class MusicHelper:
         
         return new_note_list
         
-    def derive_tracks_from_lyrics(self, lyrics, notes, track_duration):
+    def derive_tracks_from_lyrics(self, lyrics, notes, track_duration, method):
         '''
         Attempts to find patterns in lyrics to be paired with the given notes
         to create new tracks of a specified duration
         '''
         num_notes = len(notes)
         lyrics_sentences = lyrics.replace("?", ".").replace("!", ".").split(".")
-        #Remove the sentence token after the final .
-        del lyrics_sentences[-1]
+        #Remove tiny sentences, if any
+        lyrics_sentences = [s for s in lyrics_sentences if len(s) > 5]
         num_sentences = len(lyrics_sentences)
         
         track_list = list()
         #Skip first sentence, as the Lead track will be based on it already
         #otherwise create a track for each sentence
-        for i in range(1, num_sentences):
+        for i in range(1, min(3,num_sentences)):
             #Count the words in this sentence
-            lyric_words = nltk.word_tokenize(lyrics_sentences[i])
+            lyric_sentence = lyrics_sentences[i]
+            lyric_words = nltk.word_tokenize(lyric_sentence)
             num_words = len(lyric_words)
             #Count the number of characters in each word
             list_of_char_counts = list()
@@ -169,44 +170,27 @@ class MusicHelper:
                 list_of_char_counts.append(len(lyric_words[j]))
             num_chars_total = sum([cnt for cnt in list_of_char_counts])
 
-            #Give notes equal time, in accordance with represented word length, plus time for rests
-            duration_unit = math.floor(((track_duration / (num_words  * num_chars_total)) - (num_words))/0.25) * 0.25
-
             #Every other track picks a pattern length differently
+            #but all tracks use the agent's invention methods
             if i % 2 == 0:
-                pattern_length = list_of_char_counts[0]
-                if len(list_of_char_counts) > 1:
-                    pattern_accent = list_of_char_counts[1]
-                else:
-                    pattern_accent = ord(lyric_words[0][0]) % 43
-                if len(list_of_char_counts) > 2:
-                    accent_occur = list_of_char_counts[2]
-                elif len(lyric_words[0]) > 1:
-                    accent_occur = ord(lyric_words[0][1]) % 43
-                else:
-                    accent_occur = 1
-                inversion_accent = (accent_occur + pattern_accent) % 3
-                inversion_occur = (pattern_length + pattern_accent) // 2
+                pattern_length = method[0](lyric_sentence)
+                pattern_accent = method[1](lyric_sentence)
+                accent_occur = method[2](lyric_sentence)
+                inversion_accent = method[3](lyric_sentence)
+                inversion_occur = method[4](lyric_sentence) 
+                #Aim to start shortly before the lead track
+                target_duration = track_duration * 1.1
             else:
-                pattern_length = list_of_char_counts[-1]
-                if len(list_of_char_counts) > 1:
-                    pattern_accent = list_of_char_counts[-2]
-                else:
-                    pattern_accent = ord(lyric_words[-1][0]) % 43
-                if len(list_of_char_counts) > 2:
-                    accent_occur = list_of_char_counts[-3]
-                elif len(lyric_words[0]) > 1:
-                    accent_occur = ord(lyric_words[-1][-1]) % 43
-                else:
-                    accent_occur = 1
-                inversion_accent = (pattern_length + pattern_accent) % 3
-                inversion_occur = (accent_occur + pattern_accent) // 2
-                
-            #Ensure we got no 0 values from mod operations
-            pattern_accent = max(1, pattern_accent)
-            accent_occur = max(1, accent_occur)
-            inversion_accent = max(1, inversion_accent)
-            inversion_occur = max(1, inversion_occur)
+                pattern_length = method[4](lyric_sentence)
+                pattern_accent = method[3](lyric_sentence)
+                accent_occur = method[2](lyric_sentence)
+                inversion_accent = method[1](lyric_sentence) 
+                inversion_occur = method[0](lyric_sentence)
+                #Aim for a lead-in before the other tracks
+                target_duration = track_duration * 1.2
+
+            #Give notes equal time, in accordance with represented word length, plus time for rests
+            duration_unit = (target_duration / (num_words  * num_chars_total)) - num_words
             
             #Repeat the pattern equal to the number of words in the sentence
             this_track = NoteSeq()
@@ -216,10 +200,12 @@ class MusicHelper:
                     duration_count = m % list_of_char_counts[n]
                     note = notes[note_to_append]
                     
+                    #Invert the pattern this time, if the invention method calls for it
                     if n % inversion_occur == 2:
                         note = note.inversion(inversion_accent)
                     
                     note.duration = duration_count * duration_unit
+                    #Transpose this note, if the invention method calls for it
                     if m % accent_occur == 3:
                         if m // accent_occur % 2 == 0:
                             note = note.transposition(pattern_accent)
@@ -246,7 +232,7 @@ class MusicHelper:
         :returns: A tuple containing tempo and a list of MIDI instruments in int format.
         '''
         #Filter out meaningless words
-        if word in "and from say her him his she had the their for one your all out ass are":
+        if word in "and from say her him his she had the their for one your all out ass are how has very each":
             return None
         if word in "children kids young baby youth age kid bosom asleep nap quiet silence discovery learn education "\
                     "find taught teacher lesson boy girl imagination imagine":
@@ -254,7 +240,8 @@ class MusicHelper:
             
         if word in "sky nature tree forest earth atmosphere air bird "\
                     "tweet nest egg flight breasted morning sunrise day explore happy happiness calmly freshest "\
-                    "sail boat ocean sea pelican seagulls wings Captain sailors ship starboard port dock feathers":
+                    "sail boat ocean sea pelican seagulls wings Captain sailors ship starboard port dock feathers"\
+                    "seaworthy":
             return (180, [99, 122, 123]) #100-Atmosphere, 123-Seashore, 124-Bird Tweet
         
         if word in "olden yearning ancients timely slowing pine wishing wistful lonely harkening past year long ago "\
@@ -301,10 +288,10 @@ class MusicHelper:
             return (120, [79, 75, 76]) #80-Ocarina, 76-Pan flute, 77-Blown bottle
             
         if word in "alien terrifying terror frightening ghastly abomination creature predator beastly foul scared"\
-                    "foreign":
+                    "foreign infernal snuff":
             return (600, [126, 103, 127]) #127-Goblins, 104-Scifi, 128-Gunshots
         
-        if word in "mountains rocks entombed cliffside canyons boulders plateau deserted cactus":
+        if word in "mountains rocks entombed cliffside canyons boulders plateau deserted cactus underneath":
             return (240, [71, 81, 114])#72 - Clarinet, 82-Sawtooth, 115-Steel Drums
         
         if word in "random lunatics crazy gibberish crazed bizarre bewildering nonsense unknowable":
