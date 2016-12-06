@@ -235,7 +235,8 @@ class MusicHelper:
         :returns: A tuple containing tempo and a list of MIDI instruments in int format.
         '''
         #Filter out meaningless words
-        if word in "and from say her him his she had the their for one your all out ass are how has very each own":
+        if word in "and from say her him his she had the their for one your all out ass are how has very each own off "\
+                    "fit":
             return None
         if word in "children kids young baby youth age kid bosom asleep nap quiet silence discovery learn education "\
                     "find taught teacher lesson boy girl imagination imagine":
@@ -243,7 +244,7 @@ class MusicHelper:
             
         if word in "sky nature tree forest earth atmosphere air bird "\
                     "tweet nest egg flight breasted morning sunrise day explore happy happiness calmly freshest "\
-                    "sail boat ocean sea pelican seagulls wings Captain sailors ship starboard port dock feathers"\
+                    "sail boat ocean sea pelican seagulls wings Captain sailors ship starboard port dock feathers "\
                     "seaworthy":
             return (180, [99, 122, 123]) #100-Atmosphere, 123-Seashore, 124-Bird Tweet
         
@@ -251,7 +252,7 @@ class MusicHelper:
                     "true truly travel men return":
             return (140, [109, 89, 117]) #110-Bagpipe, 90-Warm synth, 118-Melodic Drum
             
-        if word in "evil danger primal attacked attacking offense enemy dungeon wounded bleed blood murder"\
+        if word in "evil danger primal attacked attacking offense enemy dungeon wounded bleed blood murder "\
                     "death kill festering mortal peril endangered threatened ":
             return (600,[30, 85, 114]) #31-Distortion Guitar, 86-Voice, 115-Steel drums
         
@@ -259,7 +260,7 @@ class MusicHelper:
                     "lucked chance godly heavenly golden happily peace above gods divine Christmas":
             return (180,[48, 52, 98]) #49-String Ensemble, 53-Choir Ahs, 99-Crystal
             
-        if word in "guitar solo rocked rocking tune played song strummed picked heard bass electric music":
+        if word in "guitar solo rocked rocking tune played song strummed picked heard bass electric music ":
             return (240, [25, 32, 117]) #26-Steel guitar,  33-Acoustic bass, 118-Melodic Tom
             
         if word in "native indigenous locally primitive folklore community social friendly smallest society "\
@@ -279,7 +280,7 @@ class MusicHelper:
         if word in "rusty broken cracked failing abused large fallen abandon dismayed":
             return (180, [22, 70, 58]) #23-Harmonica, 71-Bassoon, 59-Tuba
         
-        if word in "adventure encounter showdown lingering nearby thousand circles":
+        if word in "adventure encounter showdown lingering nearby thousand circles battle lurking sinister":
             return (200, [44, 18, 119]) #45-Tremolo Strings, 19-Rock Organ, 120-Reverse Cymbal
         
         if word in "aqueduct river stream flowing filled filling splashing swimming liquid dripping water flooded "\

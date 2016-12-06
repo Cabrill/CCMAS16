@@ -299,7 +299,8 @@ class MusicAgent(CreativeAgent):
         #Attempt to detect patterns in the lyrics in combination with the
         #other notes, for the purpose of creating more tracks using the agent's 
         #preferred invention method
-        pattern_tracks = self.music_helper.derive_tracks_from_lyrics(lyrics, other_notes, lead_track_duration, invention_method.method_list)
+        if len(other_notes) > 0:
+            pattern_tracks = self.music_helper.derive_tracks_from_lyrics(lyrics, other_notes, lead_track_duration, invention_method.method_list)
         for i in range(0, len(pattern_tracks)):
             track_list.append(pattern_tracks[i])
                 
