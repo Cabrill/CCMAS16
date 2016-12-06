@@ -179,7 +179,8 @@ class MusicHelper:
                 inversion_accent = method[3](lyric_sentence)
                 inversion_occur = method[4](lyric_sentence) 
                 #Aim to start shortly before the lead track
-                target_duration = track_duration * 1.1
+                target_duration = track_duration * 1.2
+                note_vol = 85
             else:
                 pattern_length = method[4](lyric_sentence)
                 pattern_accent = method[3](lyric_sentence)
@@ -187,7 +188,8 @@ class MusicHelper:
                 inversion_accent = method[1](lyric_sentence) 
                 inversion_occur = method[0](lyric_sentence)
                 #Aim for a lead-in before the other tracks
-                target_duration = track_duration * 1.2
+                target_duration = track_duration * 1.3
+                note_vol = 80
 
             #Give notes equal time, in accordance with represented word length, plus time for rests
             duration_unit = (target_duration / (num_words  * num_chars_total)) - num_words
@@ -199,6 +201,7 @@ class MusicHelper:
                     note_to_append = m % num_notes
                     duration_count = m % list_of_char_counts[n]
                     note = notes[note_to_append]
+                    note.volume = note_vol
                     
                     #Invert the pattern this time, if the invention method calls for it
                     if n % inversion_occur == 2:
@@ -232,7 +235,7 @@ class MusicHelper:
         :returns: A tuple containing tempo and a list of MIDI instruments in int format.
         '''
         #Filter out meaningless words
-        if word in "and from say her him his she had the their for one your all out ass are how has very each":
+        if word in "and from say her him his she had the their for one your all out ass are how has very each own":
             return None
         if word in "children kids young baby youth age kid bosom asleep nap quiet silence discovery learn education "\
                     "find taught teacher lesson boy girl imagination imagine":
@@ -282,14 +285,14 @@ class MusicHelper:
         if word in "aqueduct river stream flowing filled filling splashing swimming liquid dripping water flooded "\
                     "spilling drenched soaking soaked moistened slick puddles puddling drenching weather rain wind cloud "\
                     "drizzle mist ":
-            return (140, [31, 97, 123]) #32-Guitar harmonics, 97-Rain, 123-Seashore
+            return (140, [40, 96, 123]) #41-Violin, 97-Rain, 123-Seashore
          
         if word in "cheerful happy pleasant jolly happiness joyful carefree":
             return (120, [79, 75, 76]) #80-Ocarina, 76-Pan flute, 77-Blown bottle
             
         if word in "alien terrifying terror frightening ghastly abomination creature predator beastly foul scared"\
                     "foreign infernal snuff":
-            return (600, [126, 103, 127]) #127-Goblins, 104-Scifi, 128-Gunshots
+            return (600, [101, 103, 127]) #102-Goblins, 104-Scifi, 128-Gunshots
         
         if word in "mountains rocks entombed cliffside canyons boulders plateau deserted cactus underneath":
             return (240, [71, 81, 114])#72 - Clarinet, 82-Sawtooth, 115-Steel Drums
