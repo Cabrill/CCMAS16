@@ -261,6 +261,9 @@ class MusicAgent(CreativeAgent):
         lead_track = NoteSeq()
         other_notes = NoteSeq()
         
+        lead_note_duration = (invention_method.method_list[0](lyrics) % 6) * 0.05
+        lead_rest_duration = (invention_method.method_list[1](lyrics) % 8) * 0.25
+        
         #Separate notes into lead track/others, assign word-based duration
         for i in range(0,len(notes)):
             #Associate each note for the lead track with a word in the lyrics,
@@ -272,7 +275,7 @@ class MusicAgent(CreativeAgent):
                 #Exclude punctuation in lead track
                 if word_for_note not in (',', '.', ';', '!', '?', '"', ':', '/', '\\'):
                     #Set notes duration based on word length
-                    notes[i].dur = len(word_for_note) * 0.25
+                    notes[i].dur = len(word_for_note) * lead_note_duration
                     lead_track.append(notes[i])
             else:
                 other_notes.append(notes[i])
@@ -281,7 +284,7 @@ class MusicAgent(CreativeAgent):
         rest_count = 0
         for i in range(0, len(lead_track)):
             if lyric_words[i] in (',', '.', ';', '!', '?', '"', ':', '/', '\\'):
-                lead_track.insert(i+rest_count, Rest(2))
+                lead_track.insert(i+rest_count, Rest(lead_rest_duration))
                 rest_count = rest_count + 1
         
         #See how long the lead track is
@@ -321,9 +324,9 @@ class MusicAgent(CreativeAgent):
                 track_list[i].insert(0,Rest(insert_rest))
                 track_list[i].append(Rest(insert_rest))
             
-            #Add a 1 second pause to the end of the longest track so it ends gracefully
+            #Add a 2 second pause to the end of the longest track so it ends gracefully
             if this_track_duration == longest_duration:
-                track_list[i].insert(0,Rest(1))
+                track_list[i].insert(0,Rest(2))
             
         return word_theme, music_theme, track_list
             
