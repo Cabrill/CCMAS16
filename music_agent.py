@@ -152,7 +152,7 @@ class MusicAgent(CreativeAgent):
             evaluation method
         '''
         probability = 1 - likelihood(artifact.obj[0], self.MarkovChainProbs)
-        length = len(nltk.word_tokenize(artifact.obj[0])) / self.wlen_limits[1]
+        length = len(nltk.word_tokenize(artifact.obj[0])) / (self.wlen_limits[1] * 4)
         grammar = self.grammar_check(artifact)
         evaluation = grammar * probability * length
         return evaluation, "MarkovChainEvaluation"
@@ -341,6 +341,7 @@ class MusicAgent(CreativeAgent):
             for invention_method in self.invention_methods:
                 if invention_method.times_utilized > 5 and invention_method.average_rating < worst_rating:
                     worst_method = invention_method
+                    break
             
             #Replace the worst method, if one found
             if worst_method:
@@ -373,6 +374,11 @@ class MusicAgent(CreativeAgent):
             #If no method chosen based on the lyrics, choose the highest ranked one 
             if not best_method:
                 best_method = self.invention_methods[0]
+                if len(self.invention_methods) < self.method_limit:
+                    best_method = self.create_an_invention_method(lyrics)
+                    self.invention_methods.append(best_method)
+                else:
+                    best_method = self.invention_methods[0]
 
             return best_method        
     
