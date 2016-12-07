@@ -1,4 +1,4 @@
-import pyknon, operator, numpy, random, nltk
+import pyknon, operator, numpy, random, nltk, math
 from os import listdir
 from os.path import isfile, join
 from pyknon.music import NoteSeq, Rest
@@ -145,23 +145,24 @@ class MusicHelper:
         
         return new_note_list
         
-    def derive_tracks_from_lyrics(self, lyrics, notes, track_duration):
+    def derive_tracks_from_lyrics(self, lyrics, notes, track_duration, method):
         '''
         Attempts to find patterns in lyrics to be paired with the given notes
         to create new tracks of a specified duration
         '''
         num_notes = len(notes)
         lyrics_sentences = lyrics.replace("?", ".").replace("!", ".").split(".")
-        #Remove the sentence token after the final .
-        del lyrics_sentences[-1]
+        #Remove tiny sentences, if any
+        lyrics_sentences = [s for s in lyrics_sentences if len(s) > 5]
         num_sentences = len(lyrics_sentences)
-
+        
         track_list = list()
         #Skip first sentence, as the Lead track will be based on it already
         #otherwise create a track for each sentence
-        for i in range(1, num_sentences):
+        for i in range(1, min(3,num_sentences)):
             #Count the words in this sentence
-            lyric_words = nltk.word_tokenize(lyrics)
+            lyric_sentence = lyrics_sentences[i]
+            lyric_words = nltk.word_tokenize(lyric_sentence)
             num_words = len(lyric_words)
             #Count the number of characters in each word
             list_of_char_counts = list()
@@ -169,22 +170,29 @@ class MusicHelper:
                 list_of_char_counts.append(len(lyric_words[j]))
             num_chars_total = sum([cnt for cnt in list_of_char_counts])
 
-            #Give notes equal time, in accordance with represented word length, plus time for rests
-            duration_unit = (track_duration / (num_words  * num_chars_total)) - (num_words)
-            
             #Every other track picks a pattern length differently
+            #but all tracks use the agent's invention methods
             if i % 2 == 0:
-                pattern_length = list_of_char_counts[0]
-                pattern_accent = list_of_char_counts[1]
-                accent_occur = list_of_char_counts[2]
-                inversion_accent = (accent_occur + pattern_accent) % 3
-                inversion_occur = (pattern_length + pattern_accent) // 2
+                pattern_length = method[0](lyric_sentence)
+                pattern_accent = method[1](lyric_sentence)
+                accent_occur = method[2](lyric_sentence)
+                inversion_accent = method[3](lyric_sentence)
+                inversion_occur = method[4](lyric_sentence) 
+                #Aim to start shortly before the lead track
+                target_duration = track_duration * 1.2
+                note_vol = 85
             else:
-                pattern_length = list_of_char_counts[-1]
-                pattern_accent = list_of_char_counts[-2]
-                accent_occur = list_of_char_counts[-3]
-                inversion_accent = (pattern_length + pattern_accent) % 3
-                inversion_occur = (accent_occur + pattern_accent) // 2
+                pattern_length = method[4](lyric_sentence)
+                pattern_accent = method[3](lyric_sentence)
+                accent_occur = method[2](lyric_sentence)
+                inversion_accent = method[1](lyric_sentence) 
+                inversion_occur = method[0](lyric_sentence)
+                #Aim for a lead-in before the other tracks
+                target_duration = track_duration * 1.3
+                note_vol = 80
+
+            #Give notes equal time, in accordance with represented word length, plus time for rests
+            duration_unit = (target_duration / (num_words  * num_chars_total)) - num_words
             
             #Repeat the pattern equal to the number of words in the sentence
             this_track = NoteSeq()
@@ -193,11 +201,14 @@ class MusicHelper:
                     note_to_append = m % num_notes
                     duration_count = m % list_of_char_counts[n]
                     note = notes[note_to_append]
+                    note.volume = note_vol
                     
+                    #Invert the pattern this time, if the invention method calls for it
                     if n % inversion_occur == 2:
                         note = note.inversion(inversion_accent)
                     
                     note.duration = duration_count * duration_unit
+                    #Transpose this note, if the invention method calls for it
                     if m % accent_occur == 3:
                         if m // accent_occur % 2 == 0:
                             note = note.transposition(pattern_accent)
@@ -209,7 +220,7 @@ class MusicHelper:
             
             #Add the completed track
             track_list.append(this_track)
-            
+
         return track_list
     
     @staticmethod
@@ -224,41 +235,75 @@ class MusicHelper:
         :returns: A tuple containing tempo and a list of MIDI instruments in int format.
         '''
         #Filter out meaningless words
-        if word in "and from say her him his she had the their for one you all":
+        if word in "and from say her him his she had the their for one your all out ass are how has very each own off "\
+                    "fit":
             return None
         if word in "children kids young baby youth age kid bosom asleep nap quiet silence discovery learn education "\
-                    "find taught teacher lesson boy girl":
+                    "find taught teacher lesson boy girl imagination imagine":
             return (160,[75, 10, 15]) #76-Pan Flute, 11-Music Box, 16-Dulcimer
             
-        if word in "sky nature tree forest earth weather rain wind cloud drizzle mist atmosphere air bird "\
-                    "tweet nest egg flight breasted morning sunrise day explore happy happiness calmly freshest":
+        if word in "sky nature tree forest earth atmosphere air bird "\
+                    "tweet nest egg flight breasted morning sunrise day explore happy happiness calmly freshest "\
+                    "sail boat ocean sea pelican seagulls wings Captain sailors ship starboard port dock feathers "\
+                    "seaworthy":
             return (180, [99, 122, 123]) #100-Atmosphere, 123-Seashore, 124-Bird Tweet
         
-        if word in "olden yearning ancients timely slowing pine wishing wistful lonely harkening past year month long ago "\
-                    "true truly travel men night":
+        if word in "olden yearning ancients timely slowing pine wishing wistful lonely harkening past year long ago "\
+                    "true truly travel men return":
             return (140, [109, 89, 117]) #110-Bagpipe, 90-Warm synth, 118-Melodic Drum
             
-        if word in "evil danger primal attacked attacking offense enemy dungeon wounded bleed blood murder"\
+        if word in "evil danger primal attacked attacking offense enemy dungeon wounded bleed blood murder "\
                     "death kill festering mortal peril endangered threatened ":
-            return (300,[30, 85, 114]) #31-Distortion Guitar, 86-Voice, 115-Steel drums
+            return (600,[30, 85, 114]) #31-Distortion Guitar, 86-Voice, 115-Steel drums
         
         if word in "voices angels choir holy blessing prayer blessed fortunate fortune lucky benefit boon "\
-                    "lucked chance godly heavenly golden happily peace above":
+                    "lucked chance godly heavenly golden happily peace above gods divine Christmas":
             return (180,[48, 52, 98]) #49-String Ensemble, 53-Choir Ahs, 99-Crystal
             
-        if word in "guitar solo rocked rocking tune played song strummed picked heard bass electric music":
+        if word in "guitar solo rocked rocking tune played song strummed picked heard bass electric music ":
             return (240, [25, 32, 117]) #26-Steel guitar,  33-Acoustic bass, 118-Melodic Tom
             
         if word in "native indigenous locally primitive folklore community social friendly smallest society "\
                     "farming garden landscape enjoyment enjoyed relaxed relaxation relaxing peaceful satisfied":
             return (160, [78, 12, 116]) #79-Whistle, 13-Marimba, 117-Taiko Drum
+            
+        if word in "clock minutes hours seconds chronological timely":
+            return (160, [14, 13, 116]) #15-Tubular Bells, 14-xylophone, 117-Taiko drum
+            
+        if word in "strings wind breeze orchestra elegant elegance somber precision ritz class impressive":
+            return (120, [40, 42, 46]) #40-Violin, 43-Cello, 47-Harp
+            
+        if word in "moon mystical nighttime dusk evening stars stargazing space planets sense traveler alien atmosheric"\
+                    "strata radiation phenomenon shone sparkle shining distant":
+            return (160, [85, 88, 13]) #86-Voice, , 89-New Age, 14-Xylophone
+            
+        if word in "rusty broken cracked failing abused large fallen abandon dismayed":
+            return (180, [22, 70, 58]) #23-Harmonica, 71-Bassoon, 59-Tuba
         
-        if word == "random":
-            random_tempo = random.randint(120,250)
-            random_instr1 = random.randint(1, 127)
-            random_instr2 = random.randint(1, 127)
-            random_instr3 = random.randint(1, 127)
-            return (random.randint(60,180), [random_instr1, random_instr2, random_instr3])
+        if word in "adventure encounter showdown lingering nearby thousand circles battle lurking sinister":
+            return (200, [44, 18, 119]) #45-Tremolo Strings, 19-Rock Organ, 120-Reverse Cymbal
+        
+        if word in "aqueduct river stream flowing filled filling splashing swimming liquid dripping water flooded "\
+                    "spilling drenched soaking soaked moistened slick puddles puddling drenching weather rain wind cloud "\
+                    "drizzle mist ":
+            return (140, [40, 96, 123]) #41-Violin, 97-Rain, 123-Seashore
+         
+        if word in "cheerful happy pleasant jolly happiness joyful carefree":
+            return (120, [79, 75, 76]) #80-Ocarina, 76-Pan flute, 77-Blown bottle
+            
+        if word in "alien terrifying terror frightening ghastly abomination creature predator beastly foul scared"\
+                    "foreign infernal snuff":
+            return (600, [101, 103, 127]) #102-Goblins, 104-Scifi, 128-Gunshots
+        
+        if word in "mountains rocks entombed cliffside canyons boulders plateau deserted cactus underneath":
+            return (240, [71, 81, 114])#72 - Clarinet, 82-Sawtooth, 115-Steel Drums
+        
+        if word in "random lunatics crazy gibberish crazed bizarre bewildering nonsense unknowable":
+            random_tempo = random.randint(120,250) 
+            random_instr1 = random.randint(1, 114) #Random lead instrument
+            random_instr2 = random.randint(1, 127) #Random anything
+            random_instr3 = random.randint(113, 121) #Random percussion
+            return (random_tempo, [random_instr1, random_instr2, random_instr3])
 
     @staticmethod  
     def determine_instrument(midi_int):
@@ -313,7 +358,7 @@ class MusicHelper:
                 21 : 'Reed Organ',
                 22 : 'Accordion',
                 23 : 'Harmonica',
-                24 : '*Tango Accordion'
+                24 : 'Tango Accordion'
             }[midi_int]
 
         elif midi_int <= 32:
