@@ -155,7 +155,8 @@ class MusicAgent(CreativeAgent):
         probability = 1 - likelihood(artifact.obj[0], self.MarkovChainProbs)
         length = len(nltk.word_tokenize(artifact.obj[0])) / (self.wlen_limits[1] * 4)
         grammar = self.grammar_check(artifact)
-        evaluation = grammar * probability * length
+        music = self.eval_music(artifact)
+        evaluation = grammar * probability * length * music
         return evaluation, "MarkovChainEvaluation"
     
     def novelty(self, artifact):
@@ -226,10 +227,23 @@ class MusicAgent(CreativeAgent):
                     if rest[j:j + minPhrase] == select: #if selected phrase is found, increase its counter by one
                         occur[select] += 1
         sorted_occ = sorted(occur.items(), key=operator.itemgetter(1), reverse=True) #sort the occurrence dictionary in descending order
-        musiceval= sorted_occ[0] #returns the most repeated phrase and its number of repetitions. e.g. ('aba', 3).
+        #sorted_occ[i] returns the most repeated phrase and its number of repetitions. e.g. ('aba', 3).
         # If the number of repetitions is <= 1 then there were no repeated phrases. Because the occurences dictionary is sorted
         #as a list, we can return more elements if needed
-        return musiceval
+        
+        #Convert these phrase counts to a 0-1 evaluation
+        eval_score = 0
+        ideal_count = 5
+        for i in range(min(4, max(0,len(sorted_occ)-1)), 0,  -1):
+            if len(sorted_occ[i]) > 1:
+                phrase_count = sorted_occ[i][1]
+                phrase_score = max(0,(ideal_count - abs(phrase_count - ideal_count)) / ideal_count) #Measures proximity to ideal
+                phrase_score = phrase_score * (0.0715 * (i+1))#This 0.0715*i gives depreceating returns for more patterns
+                eval_score = eval_score + phrase_score
+        
+        eval_score = min(1, eval_score) #Correct rounding error that would result in 1.01
+        
+        return eval_score
 
     def generate(self):
         '''Generate new text.
