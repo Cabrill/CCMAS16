@@ -1,0 +1,675 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>music_agent &#8212; MFMC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for music_agent</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">aiomas</span><span class="o">,</span> <span class="nn">re</span><span class="o">,</span> <span class="nn">random</span><span class="o">,</span> <span class="nn">nltk</span><span class="o">,</span> <span class="nn">operator</span>
+<span class="kn">from</span> <span class="nn">creamas.core</span> <span class="k">import</span> <span class="n">CreativeAgent</span><span class="p">,</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">Simulation</span><span class="p">,</span> <span class="n">Artifact</span>
+<span class="kn">from</span> <span class="nn">mc</span> <span class="k">import</span> <span class="n">markov_chain</span><span class="p">,</span> <span class="n">generate</span><span class="p">,</span> <span class="n">sanitize</span><span class="p">,</span> <span class="n">determineOrder</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">,</span> <span class="n">format_for_printing</span>
+<span class="kn">from</span> <span class="nn">list_mem</span> <span class="k">import</span> <span class="n">ListMemory</span>
+<span class="kn">from</span> <span class="nn">pyknon.music</span> <span class="k">import</span> <span class="n">NoteSeq</span><span class="p">,</span> <span class="n">Rest</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
+
+<div class="viewcode-block" id="levenshtein"><a class="viewcode-back" href="../music_agent.html#music_agent.levenshtein">[docs]</a><span class="k">def</span> <span class="nf">levenshtein</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Compute the edit distance between two strings.</span>
+
+<span class="sd">    From Wikipedia article; Iterative with two matrix rows.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="n">t</span><span class="p">:</span> <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="n">v0</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">v1</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">v0</span><span class="p">)):</span>
+        <span class="n">v0</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)):</span>
+        <span class="n">v1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)):</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">t</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">else</span> <span class="mi">1</span>
+            <span class="n">v1</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">v1</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">v0</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">v0</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">cost</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">v0</span><span class="p">)):</span>
+            <span class="n">v0</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">v1</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">v1</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)]</span></div>
+    
+<div class="viewcode-block" id="invention_method"><a class="viewcode-back" href="../music_agent.html#music_agent.invention_method">[docs]</a><span class="k">class</span> <span class="nc">invention_method</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    A list of functions used to generate parameters in the creation of, </span>
+<span class="sd">    and minimal statistics about the overall invention method</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_list</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">times_utilized</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">average_rating</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method_list</span> <span class="o">=</span> <span class="n">method_list</span></div>
+
+<div class="viewcode-block" id="MusicAgent"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent">[docs]</a><span class="k">class</span> <span class="nc">MusicAgent</span><span class="p">(</span><span class="n">CreativeAgent</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A sample agent implementation.</span>
+
+<span class="sd">    Agent invents new words be generating them at random and evaluating them</span>
+<span class="sd">    with respect to its own vocabulary. </span>
+
+<span class="sd">    Agent learns its vocabulary from the file given at initialization.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">mcprobs</span><span class="p">,</span> <span class="n">mcstates</span><span class="p">,</span> <span class="n">helper</span><span class="p">,</span> <span class="n">mem_len</span><span class="p">,</span> <span class="n">service_addr</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf8&#39;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                 <span class="n">wlen_limits</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">method_limits</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">chars</span><span class="o">=</span><span class="s1">&#39;abcdefghijklmnopqrstuvwxyz&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        :param env:</span>
+<span class="sd">            subclass of :py:class:`~creamas.core.environment.Environment`</span>
+
+<span class="sd">        :param str filename: Filename from which the words should be parsed.</span>
+<span class="sd">        :param str encoding: Encoding of the file</span>
+
+<span class="sd">        :param int n:</span>
+<span class="sd">            The number of words the agent considers per :func:`invent`</span>
+
+<span class="sd">        :param tuple wlen_limits:</span>
+<span class="sd">            (int, int)-tuple, acceptable word length limits</span>
+
+<span class="sd">        :param str chars: acceptable characters in the words</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chars</span> <span class="o">=</span> <span class="n">chars</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wlen_limits</span> <span class="o">=</span> <span class="n">wlen_limits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;^\w+$&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span> <span class="o">=</span> <span class="n">mcprobs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainStates</span> <span class="o">=</span> <span class="n">mcstates</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mcpOrder</span> <span class="o">=</span> <span class="n">determineOrder</span><span class="p">(</span><span class="n">mcprobs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mem</span> <span class="o">=</span> <span class="n">ListMemory</span><span class="p">(</span><span class="n">mem_len</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">service_addr</span> <span class="o">=</span> <span class="n">service_addr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span> <span class="o">=</span> <span class="n">helper</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method_limit</span> <span class="o">=</span> <span class="n">method_limits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        
+<div class="viewcode-block" id="MusicAgent.learn"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.learn">[docs]</a>    <span class="k">def</span> <span class="nf">learn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Improve the agents Markov Chain by incorporating the state transitions</span>
+<span class="sd">        in the supplied artifact.</span>
+<span class="sd">        </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` to be evaluated</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">raw_text</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="c1"># Tokenize the text into words</span>
+        <span class="n">tokenized_words</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">raw_text</span><span class="p">)</span>
+        
+        <span class="c1"># Use the same order as existing learned Markov Chain</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mcpOrder</span>
+        
+        <span class="c1"># Now we are ready to create the state transitions</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokenized_words</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">-</span><span class="n">order</span><span class="p">):</span>
+                <span class="n">pred</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">order</span><span class="p">):</span>
+                    <span class="n">pred</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="o">+</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">succ</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="o">+</span><span class="n">order</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">pred</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainStates</span><span class="p">:</span>
+                    <span class="c1"># Predecessor key is not yet in the outer dictionary, so we create</span>
+                    <span class="c1"># a new dictionary for it.</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainStates</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">if</span> <span class="n">succ</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainStates</span><span class="p">[</span><span class="n">pred</span><span class="p">]:</span>
+                    <span class="c1"># Successor key is not yet in the inner dictionary, so we start</span>
+                    <span class="c1"># counting from one.</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainStates</span><span class="p">[</span><span class="n">pred</span><span class="p">][</span><span class="n">succ</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Otherwise we just add one to the existing value.</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainStates</span><span class="p">[</span><span class="n">pred</span><span class="p">][</span><span class="n">succ</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">1.0</span></div>
+
+<div class="viewcode-block" id="MusicAgent.compute_probabilities"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.compute_probabilities">[docs]</a>    <span class="k">def</span> <span class="nf">compute_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Compute total number of successors for each state</span>
+        <span class="n">totals</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ_counts</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainStates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">totals</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">succ_counts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        
+        <span class="c1"># Recompute the probability for each successor given the predecessor.</span>
+        <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ_counts</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainStates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pred</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">succ</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">succ_counts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">[</span><span class="n">pred</span><span class="p">][</span><span class="n">succ</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span> <span class="o">/</span> <span class="n">totals</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="MusicAgent.grammar_check"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.grammar_check">[docs]</a>    <span class="k">def</span> <span class="nf">grammar_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;This is meant to be a simple way to exclude artifacts that</span>
+<span class="sd">        end in a word known to be invalid ending for a sentence.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">score</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;and&quot;</span><span class="p">,</span> <span class="s2">&quot;the&quot;</span><span class="p">,</span> <span class="s2">&quot;of&quot;</span><span class="p">,</span> <span class="s2">&quot;if&quot;</span><span class="p">,</span> <span class="s2">&quot;their&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;as&quot;</span><span class="p">,</span> <span class="s2">&quot;but&quot;</span> <span class="p">):</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">score</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.value"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.value">[docs]</a>    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Evaluate given artifact with respect to the probability of it </span>
+<span class="sd">        occurring using the state transition probabilities from the </span>
+<span class="sd">        markov chain that the agent knows.</span>
+<span class="sd">        </span>
+<span class="sd">        Actual evaluation formula for a string is:</span>
+<span class="sd">        </span>
+<span class="sd">        probability = 1 - likelihood where likelihood is the sum product of all tokens probability</span>
+<span class="sd">            according to this agents Markov Chain.</span>
+<span class="sd">            </span>
+<span class="sd">        length = Token length / maximum token length.  This favors longer artifacts.</span>
+<span class="sd">        </span>
+<span class="sd">        grammar = Simple grammar check, that invalidates an artifact if it fails.</span>
+<span class="sd">       </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` to be evaluated</span>
+<span class="sd">        :returns:</span>
+<span class="sd">            (evaluation, word)-tuple, containing both the evaluation and the</span>
+<span class="sd">            evaluation method</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">probability</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">likelihood</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">)</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wlen_limits</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">grammar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grammar_check</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="n">music</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_music</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="n">evaluation</span> <span class="o">=</span> <span class="n">grammar</span> <span class="o">*</span> <span class="n">probability</span> <span class="o">*</span> <span class="n">length</span> <span class="o">*</span> <span class="n">music</span>
+        <span class="k">return</span> <span class="n">evaluation</span><span class="p">,</span> <span class="s2">&quot;MarkovChainEvaluation&quot;</span></div>
+    
+<div class="viewcode-block" id="MusicAgent.novelty"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.novelty">[docs]</a>    <span class="k">def</span> <span class="nf">novelty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Assign a value for the novelty of an artifact.  This value is based one</span>
+<span class="sd">        the similarity of the artifact to previously recorded artifacts and</span>
+<span class="sd">        therefore represents how unique the artifact is to this agent.   </span>
+<span class="sd">        </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` to be evaluated</span>
+<span class="sd">        :returns:</span>
+<span class="sd">            (noveltyscore, method)-tuple, containing both the novelty score and the</span>
+<span class="sd">            method used to reach this score</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># We will choose that the novelty is maximal if agent&#39;s memory is empty.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="n">novelty</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">evaluation_word</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">matching_word</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">obj</span>
+        <span class="k">for</span> <span class="n">memart</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">:</span>
+            <span class="n">word</span> <span class="o">=</span> <span class="n">memart</span><span class="o">.</span><span class="n">obj</span>
+            <span class="n">lev</span> <span class="o">=</span> <span class="n">levenshtein</span><span class="p">(</span><span class="n">evaluation_word</span><span class="p">,</span> <span class="n">word</span><span class="p">)</span>
+            <span class="n">mlen</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">evaluation_word</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)))</span>
+            <span class="n">current_novelty</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">lev</span><span class="p">)</span> <span class="o">/</span> <span class="n">mlen</span>
+            <span class="k">if</span> <span class="n">current_novelty</span> <span class="o">&lt;</span> <span class="n">novelty</span><span class="p">:</span>
+                <span class="n">novelty</span> <span class="o">=</span> <span class="n">current_novelty</span>
+                <span class="n">matching_word</span> <span class="o">=</span> <span class="n">word</span>
+        <span class="k">return</span> <span class="n">novelty</span><span class="p">,</span> <span class="n">matching_word</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.evaluate"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Evaluate given artifact by checking its inherent value and novelty.</span>
+<span class="sd">        </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` to be evaluated</span>
+<span class="sd">        :returns:</span>
+<span class="sd">            (evaluation, word)-tuple, containing both the evaluation and the</span>
+<span class="sd">            evaluation method</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">value</span><span class="p">,</span> <span class="n">value_framing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="n">novelty</span><span class="p">,</span> <span class="n">novelty_framing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">novelty</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="n">framing</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">value_framing</span><span class="p">,</span> <span class="s1">&#39;novelty&#39;</span><span class="p">:</span><span class="n">novelty_framing</span><span class="p">}</span>
+        <span class="n">evaluation</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="o">+</span> <span class="n">novelty</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        
+        <span class="k">return</span> <span class="n">evaluation</span><span class="p">,</span> <span class="n">framing</span></div>
+
+<div class="viewcode-block" id="MusicAgent.eval_music"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_music">[docs]</a>    <span class="k">def</span> <span class="nf">eval_music</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">artifact</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="nf">sanitize_track</span><span class="p">(</span><span class="n">artifact</span><span class="p">):</span> <span class="c1">#remove all not-note elements of the track_list in order to evaluate only the notes sequence</span>
+            <span class="n">tr_list</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">tr_list</span><span class="p">)</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;[&lt;&gt;:R.#, ]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">line</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()])</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Seq&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">line</span>
+
+        <span class="n">minPhrase</span> <span class="o">=</span> <span class="mi">12</span> <span class="c1">#min notes that a phrase should have</span>
+        <span class="n">notes</span> <span class="o">=</span> <span class="n">sanitize_track</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span> <span class="c1">#only the notes of track_list</span>
+        <span class="n">occur</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1">#dictionary to cotain all possible phrases and their number of occurrences</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">notes</span><span class="p">)</span> <span class="o">-</span> <span class="n">minPhrase</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">select</span> <span class="o">=</span> <span class="n">notes</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">minPhrase</span><span class="p">]</span> <span class="c1">#selected phrase to look for</span>
+            <span class="k">if</span> <span class="n">select</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">occur</span><span class="p">:</span> <span class="c1">#if the phrase is not in the dictionary, add it</span>
+                <span class="n">occur</span><span class="p">[</span><span class="n">select</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1">#inital value of occurrence</span>
+
+            <span class="n">rest</span> <span class="o">=</span> <span class="n">notes</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">notes</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">minPhrase</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">notes</span><span class="p">)]</span> <span class="c1">#rest of the notes without the selected phrase</span>
+            <span class="k">if</span> <span class="n">occur</span><span class="p">[</span><span class="n">select</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span> <span class="c1">#if we haven&#39;t looked for the phrase, look for it, else continue to the next one</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span> <span class="o">-</span> <span class="n">minPhrase</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">rest</span><span class="p">[</span><span class="n">j</span><span class="p">:</span><span class="n">j</span> <span class="o">+</span> <span class="n">minPhrase</span><span class="p">]</span> <span class="o">==</span> <span class="n">select</span><span class="p">:</span> <span class="c1">#if selected phrase is found, increase its counter by one</span>
+                        <span class="n">occur</span><span class="p">[</span><span class="n">select</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">sorted_occ</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">occur</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1">#sort the occurrence dictionary in descending order</span>
+        <span class="c1">#sorted_occ[i] returns the most repeated phrase and its number of repetitions. e.g. (&#39;aba&#39;, 3).</span>
+        <span class="c1"># If the number of repetitions is &lt;= 1 then there were no repeated phrases. Because the occurences dictionary is sorted</span>
+        <span class="c1">#as a list, we can return more elements if needed</span>
+        
+        <span class="c1">#Convert these phrase counts to a 0-1 evaluation</span>
+        <span class="n">eval_score</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">ideal_count</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_occ</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="mi">0</span><span class="p">,</span>  <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_occ</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">phrase_count</span> <span class="o">=</span> <span class="n">sorted_occ</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">phrase_score</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,(</span><span class="n">ideal_count</span> <span class="o">-</span> <span class="nb">abs</span><span class="p">(</span><span class="n">phrase_count</span> <span class="o">-</span> <span class="n">ideal_count</span><span class="p">))</span> <span class="o">/</span> <span class="n">ideal_count</span><span class="p">)</span> <span class="c1">#Measures proximity to ideal</span>
+                <span class="n">phrase_score</span> <span class="o">=</span> <span class="n">phrase_score</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.0715</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="c1">#This 0.0715*i gives depreceating returns for more patterns</span>
+                <span class="n">eval_score</span> <span class="o">=</span> <span class="n">eval_score</span> <span class="o">+</span> <span class="n">phrase_score</span>
+        
+        <span class="n">eval_score</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">eval_score</span><span class="p">)</span> <span class="c1">#Correct rounding error that would result in 1.01</span>
+        
+        <span class="k">return</span> <span class="n">eval_score</span></div>
+
+<div class="viewcode-block" id="MusicAgent.generate"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Generate new text.</span>
+
+<span class="sd">        Text is generated by state transition probability of a markov chain. Text length is</span>
+<span class="sd">        in ``wlen_limits``.</span>
+
+<span class="sd">        :returns: a string of text wrapped as :class:`~creamas.core.artifact.Artifact`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">lyrics</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">text_length</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">wlen_limits</span><span class="p">)</span>
+            <span class="n">lyrics</span> <span class="o">=</span> <span class="n">lyrics</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">format_for_printing</span><span class="p">(</span><span class="n">generate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">,</span> <span class="n">text_length</span><span class="p">))</span>
+        <span class="n">lyrics</span> <span class="o">=</span> <span class="n">lyrics</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        
+        <span class="c1">#Choose an invention method for the song and record its index for later evaluation</span>
+        <span class="n">invention_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">choose_invention_method</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
+        <span class="n">method_used_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">invention_method</span><span class="p">)</span>
+        
+        <span class="c1">#Create a word theme, music theme, and track_list</span>
+        <span class="n">word_theme</span><span class="p">,</span> <span class="n">music_theme</span><span class="p">,</span> <span class="n">track_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_music</span><span class="p">(</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">invention_method</span><span class="p">)</span>
+        
+        <span class="c1">#Create an artifact containing the creations</span>
+        <span class="n">tuple_artifact</span> <span class="o">=</span> <span class="p">(</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">word_theme</span><span class="p">,</span> <span class="n">music_theme</span><span class="p">,</span> <span class="n">track_list</span><span class="p">,</span> <span class="n">method_used_idx</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">Artifact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tuple_artifact</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="nb">tuple</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.create_music"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.create_music">[docs]</a>    <span class="k">def</span> <span class="nf">create_music</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">,</span> <span class="n">invention_method</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Generate music from text.</span>
+
+<span class="sd">        Music is generated by deriving notes from text, harmonizing those notes, and splitting them</span>
+<span class="sd">        into separate tracks, choosing a theme based on the text and then matching the tracks up.</span>
+
+<span class="sd">        :returns: word_theme=a string representing inspiration, music_theme=tempo and instrument list, track_list=list of tracks composed of notes</span>
+<span class="sd">        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Read in characters in the lyrics, and convert to musical notes</span>
+        <span class="n">derived_notes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">convert_phrase_to_notes</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
+        <span class="c1">#Determine which musical key is dominant in the derived notes</span>
+        <span class="n">music_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">determine_dominant_key</span><span class="p">(</span><span class="n">derived_notes</span><span class="p">)</span>
+        <span class="c1">#Force all notes into the dominant key so we don&#39;t have dischord</span>
+        <span class="n">notes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">conform_notes_to_key</span><span class="p">(</span><span class="n">derived_notes</span><span class="p">,</span> <span class="n">music_key</span><span class="p">)</span>
+        
+        <span class="c1">#Tokenize the word list</span>
+        <span class="n">lyric_words</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
+        
+        <span class="c1">#Find a word that will provide a theme for the song</span>
+        <span class="n">music_theme</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyric_words</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">music_theme</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">word_theme</span> <span class="o">=</span> <span class="n">lyric_words</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">word_theme</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">music_theme</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">determine_theme</span><span class="p">(</span><span class="n">word_theme</span><span class="p">)</span>
+        <span class="c1">#No matching words were found, choose one at random</span>
+        <span class="k">if</span> <span class="n">music_theme</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">word_theme</span> <span class="o">=</span> <span class="s2">&quot;random&quot;</span>
+            <span class="n">music_theme</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">determine_theme</span><span class="p">(</span><span class="n">word_theme</span><span class="p">)</span>
+
+        <span class="n">track_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">lead_track</span> <span class="o">=</span> <span class="n">NoteSeq</span><span class="p">()</span>
+        <span class="n">other_notes</span> <span class="o">=</span> <span class="n">NoteSeq</span><span class="p">()</span>
+        
+        <span class="n">lead_note_duration</span> <span class="o">=</span> <span class="p">(</span><span class="n">invention_method</span><span class="o">.</span><span class="n">method_list</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">lyrics</span><span class="p">)</span> <span class="o">%</span> <span class="mi">6</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.05</span>
+        <span class="n">lead_rest_duration</span> <span class="o">=</span> <span class="p">(</span><span class="n">invention_method</span><span class="o">.</span><span class="n">method_list</span><span class="p">[</span><span class="mi">1</span><span class="p">](</span><span class="n">lyrics</span><span class="p">)</span> <span class="o">%</span> <span class="mi">8</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.25</span>
+        
+        <span class="c1">#Separate notes into lead track/others, assign word-based duration</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">notes</span><span class="p">)):</span>
+            <span class="c1">#Associate each note for the lead track with a word in the lyrics,</span>
+            <span class="c1">#until we&#39;re out of words, then put the rest in &quot;other&quot;</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyric_words</span><span class="p">):</span>
+                <span class="n">word_ptr</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="n">word_for_note</span> <span class="o">=</span> <span class="n">lyric_words</span><span class="p">[</span><span class="n">word_ptr</span><span class="p">]</span>
+                
+                <span class="c1">#Exclude punctuation in lead track</span>
+                <span class="k">if</span> <span class="n">word_for_note</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="s1">&#39;!&#39;</span><span class="p">,</span> <span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">):</span>
+                    <span class="c1">#Set notes duration based on word length</span>
+                    <span class="n">notes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">dur</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">word_for_note</span><span class="p">)</span> <span class="o">*</span> <span class="n">lead_note_duration</span>
+                    <span class="n">lead_track</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">notes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">other_notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">notes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                
+        <span class="c1">#Insert rests for lead track at punctuation marks</span>
+        <span class="n">rest_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lead_track</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">lyric_words</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="s1">&#39;!&#39;</span><span class="p">,</span> <span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">):</span>
+                <span class="n">lead_track</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="n">rest_count</span><span class="p">,</span> <span class="n">Rest</span><span class="p">(</span><span class="n">lead_rest_duration</span><span class="p">))</span>
+                <span class="n">rest_count</span> <span class="o">=</span> <span class="n">rest_count</span> <span class="o">+</span> <span class="mi">1</span>
+        
+        <span class="c1">#See how long the lead track is</span>
+        <span class="n">lead_track_duration</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">noteOrRest</span><span class="o">.</span><span class="n">dur</span> <span class="k">for</span> <span class="n">noteOrRest</span> <span class="ow">in</span> <span class="n">lead_track</span><span class="p">])</span>      
+        <span class="c1">#Then add it to our track list</span>
+        <span class="n">track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lead_track</span><span class="p">)</span>
+        
+        <span class="c1">#If there aren&#39;t enough notes, add some from the lead track</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">other_notes</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="n">lead_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lead_track</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">lead_length</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">lead_length</span><span class="o">-</span><span class="mi">8</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lead_track</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">Rest</span><span class="p">):</span>
+                    <span class="n">other_notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lead_track</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    
+        <span class="c1">#Attempt to detect patterns in the lyrics in combination with the</span>
+        <span class="c1">#other notes, for the purpose of creating more tracks using the agent&#39;s </span>
+        <span class="c1">#preferred invention method</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">other_notes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">pattern_tracks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">derive_tracks_from_lyrics</span><span class="p">(</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">other_notes</span><span class="p">,</span> <span class="n">lead_track_duration</span><span class="p">,</span> <span class="n">invention_method</span><span class="o">.</span><span class="n">method_list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pattern_tracks</span><span class="p">)):</span>
+            <span class="n">track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pattern_tracks</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                
+        <span class="c1">#Find out which track came out the longest in duration</span>
+        <span class="n">longest_duration</span> <span class="o">=</span> <span class="n">lead_track_duration</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">track_list</span><span class="p">)):</span>
+            <span class="n">this_track_duration</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">noteOrRest</span><span class="o">.</span><span class="n">dur</span> <span class="k">for</span> <span class="n">noteOrRest</span> <span class="ow">in</span> <span class="n">track_list</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span>
+            <span class="k">if</span> <span class="n">this_track_duration</span> <span class="o">&gt;</span> <span class="n">longest_duration</span><span class="p">:</span>
+                <span class="n">longest_duration</span> <span class="o">=</span> <span class="n">this_track_duration</span>
+
+        <span class="c1">#Make the tracks equal in duration, so there isn&#39;t long silence                </span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">track_list</span><span class="p">)):</span>
+            <span class="c1">#Calculate this track duration</span>
+            <span class="n">this_track_duration</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">noteOrRest</span><span class="o">.</span><span class="n">dur</span> <span class="k">for</span> <span class="n">noteOrRest</span> <span class="ow">in</span> <span class="n">track_list</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span>
+            <span class="c1">#Add some rests before/during to make it centered</span>
+            <span class="k">if</span> <span class="n">this_track_duration</span> <span class="o">&lt;</span> <span class="n">longest_duration</span><span class="p">:</span>
+                <span class="n">insert_rest</span> <span class="o">=</span> <span class="p">(</span><span class="n">longest_duration</span> <span class="o">-</span> <span class="n">this_track_duration</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+                <span class="n">track_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">Rest</span><span class="p">(</span><span class="n">insert_rest</span><span class="p">))</span>
+                <span class="n">track_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Rest</span><span class="p">(</span><span class="n">insert_rest</span><span class="p">))</span>
+            
+            <span class="c1">#Add a 2 second pause to the end of the longest track so it ends gracefully</span>
+            <span class="k">if</span> <span class="n">this_track_duration</span> <span class="o">==</span> <span class="n">longest_duration</span><span class="p">:</span>
+                <span class="n">track_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">Rest</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+            
+        <span class="k">return</span> <span class="n">word_theme</span><span class="p">,</span> <span class="n">music_theme</span><span class="p">,</span> <span class="n">track_list</span></div>
+            
+<div class="viewcode-block" id="MusicAgent.reconsider_invention_methods"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.reconsider_invention_methods">[docs]</a>    <span class="k">def</span> <span class="nf">reconsider_invention_methods</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Allows an agent to create new invention methods, or replace a poorly performing method.</span>
+<span class="sd">        :param lyrics: string to be used for generation of a new method</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#First check if we&#39;ve filled our maximum number of methods</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_limit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_an_invention_method</span><span class="p">(</span><span class="n">lyrics</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#Identify the worst performing invention method that has been used at least five times</span>
+            <span class="n">worst_method</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">worst_rating</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">invention_method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">invention_method</span><span class="o">.</span><span class="n">times_utilized</span> <span class="o">&gt;</span> <span class="mi">5</span> <span class="ow">and</span> <span class="n">invention_method</span><span class="o">.</span><span class="n">average_rating</span> <span class="o">&lt;</span> <span class="n">worst_rating</span><span class="p">:</span>
+                    <span class="n">worst_method</span> <span class="o">=</span> <span class="n">invention_method</span>
+                    <span class="k">break</span>
+            
+            <span class="c1">#Replace the worst method, if one found</span>
+            <span class="k">if</span> <span class="n">worst_method</span><span class="p">:</span>
+                <span class="c1">#Remove this poor performer from invention methods</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">worst_method</span><span class="p">)</span>
+                <span class="c1">#Replace it with something new</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_an_invention_method</span><span class="p">(</span><span class="n">lyrics</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="MusicAgent.choose_invention_method"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.choose_invention_method">[docs]</a>    <span class="k">def</span> <span class="nf">choose_invention_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; </span>
+<span class="sd">        Agent chooses the best available invention method they know, with randomness provided by</span>
+<span class="sd">        using the probability of the first two words in the lyrics as a seed.</span>
+<span class="sd">        :param lyrics: string to be used for generation of a new method, if necessary</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#First check we&#39;ve create an invention method, and create a new one to use if none exist</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_an_invention_method</span><span class="p">(</span><span class="n">lyrics</span><span class="p">))</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#Otherwise, choose the best one from those available, using the lyrics as a seed for decision</span>
+            <span class="n">lyrics_tokens</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
+            <span class="n">lyric_sample</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lyrics_tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">lyric_seed</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">likelihood</span><span class="p">(</span><span class="n">lyric_sample</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">)</span>
+            <span class="n">best_method</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">method_list</span><span class="p">:</span> <span class="n">method_list</span><span class="o">.</span><span class="n">average_rating</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">invention_method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">invention_method</span><span class="o">.</span><span class="n">average_rating</span> <span class="o">&gt;=</span> <span class="n">lyric_seed</span><span class="p">:</span>
+                    <span class="n">best_method</span> <span class="o">=</span> <span class="n">invention_method</span>
+                    <span class="k">break</span>
+            <span class="c1">#If no method chosen based on the lyrics, choose the highest ranked one </span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">best_method</span><span class="p">:</span>
+                <span class="n">best_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_limit</span><span class="p">:</span>
+                    <span class="n">best_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_an_invention_method</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_method</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">best_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="k">return</span> <span class="n">best_method</span>        </div>
+    
+<div class="viewcode-block" id="MusicAgent.create_an_invention_method"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.create_an_invention_method">[docs]</a>    <span class="k">def</span> <span class="nf">create_an_invention_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Agent creates a new invention method, using the current lyrics as a seed of inspiration</span>
+<span class="sd">        :param lyrics: string to be used for generation of a new method, if necessary</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">method_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">lyrics_tokens</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
+        <span class="n">token_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyrics_tokens</span><span class="p">)</span>
+        <span class="c1">#Create five methods used to derive values used in music generation</span>
+        <span class="k">for</span> <span class="n">method_ref</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">):</span>
+            <span class="c1">#Use the probability of a sample of the lyrics as a seed for creation</span>
+            <span class="n">lyric_index</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">token_len</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">method_ref</span> <span class="o">%</span> <span class="p">(</span><span class="n">token_len</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">lyric_sample</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lyrics_tokens</span><span class="p">[</span><span class="n">lyric_index</span><span class="p">:</span><span class="n">lyric_index</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">lyric_seed</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">likelihood</span><span class="p">(</span><span class="n">lyric_sample</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">lyric_seed</span> <span class="o">&gt;=</span> <span class="mf">0.9</span><span class="p">:</span>
+                <span class="n">new_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="n">method_ref</span><span class="o">+</span><span class="mi">5</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">lyric_seed</span> <span class="o">&gt;=</span> <span class="mf">0.8</span><span class="p">:</span>
+                <span class="n">new_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">ord</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">%</span> <span class="p">(</span><span class="mi">43</span><span class="o">+</span><span class="n">method_ref</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">lyric_seed</span> <span class="o">&gt;=</span> <span class="mf">0.7</span><span class="p">:</span>
+                <span class="n">new_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">ord</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">%</span> <span class="p">(</span><span class="mi">43</span><span class="o">+</span><span class="n">method_ref</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">lyric_seed</span> <span class="o">&gt;=</span> <span class="mf">0.6</span><span class="p">:</span>
+                <span class="n">new_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">ord</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="nb">ord</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">%</span> <span class="p">(</span><span class="n">method_ref</span><span class="o">+</span><span class="mi">43</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">lyric_seed</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">:</span>
+                <span class="n">new_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">%</span> <span class="nb">max</span><span class="p">(</span><span class="mi">3</span><span class="p">,(</span><span class="nb">ord</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">%</span><span class="mi">43</span><span class="p">)))</span>
+            <span class="k">elif</span> <span class="n">lyric_seed</span> <span class="o">&gt;=</span> <span class="mf">0.4</span><span class="p">:</span>
+                <span class="n">new_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">sum</span><span class="p">([</span><span class="nb">ord</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">text</span><span class="p">])</span> <span class="o">%</span> <span class="p">(</span><span class="mi">43</span><span class="o">+</span><span class="n">method_ref</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">lyric_seed</span> <span class="o">&gt;=</span> <span class="mf">0.3</span><span class="p">:</span>
+                <span class="n">new_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">abs</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">-</span><span class="nb">ord</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">%</span> <span class="p">(</span><span class="n">method_ref</span><span class="o">+</span><span class="mi">5</span><span class="p">)))</span>
+            <span class="k">elif</span> <span class="n">lyric_seed</span> <span class="o">&gt;=</span> <span class="mf">0.2</span><span class="p">:</span>
+                <span class="n">new_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">abs</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">-</span><span class="nb">ord</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">%</span> <span class="p">(</span><span class="n">method_ref</span><span class="o">+</span><span class="mi">5</span><span class="p">)))</span>
+            <span class="k">elif</span> <span class="n">lyric_seed</span> <span class="o">&gt;=</span> <span class="mf">0.1</span><span class="p">:</span>
+                <span class="n">new_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">abs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">%</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">-</span><span class="mi">43</span><span class="p">)</span> <span class="o">-</span> <span class="n">method_ref</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">abs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">%</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">-</span><span class="mi">43</span><span class="p">)</span> <span class="o">-</span> <span class="n">method_ref</span><span class="p">))</span>
+        
+            <span class="n">method_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_method</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">invention_method</span><span class="p">(</span><span class="n">method_list</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.invent"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.invent">[docs]</a>    <span class="k">def</span> <span class="nf">invent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Invents a new sentence</span>
+
+<span class="sd">        Generates multiple (n) words and selects the sentence with the highest rating.</span>
+
+<span class="sd">        :param int n: Number of sentences to consider</span>
+<span class="sd">        :returns:</span>
+<span class="sd">            a sentence wrapped as :class:`~creamas.core.artifact.Artifact` and its</span>
+<span class="sd">            evaluation.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># Before we generate a new artifact, we should incorporate our learning</span>
+        <span class="c1"># by recomputing the Markov Chain probabilities</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_probabilities</span><span class="p">()</span>
+        
+        <span class="n">best_artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
+        <span class="n">max_evaluation</span><span class="p">,</span> <span class="n">framing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">best_artifact</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
+            <span class="n">evaluation</span><span class="p">,</span> <span class="n">fr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">evaluation</span> <span class="o">&gt;</span> <span class="n">max_evaluation</span><span class="p">:</span>
+                <span class="n">best_artifact</span> <span class="o">=</span> <span class="n">artifact</span>
+                <span class="n">max_evaluation</span> <span class="o">=</span> <span class="n">evaluation</span>
+                <span class="n">framing</span> <span class="o">=</span> <span class="n">fr</span>
+
+        <span class="c1"># Add evaluation and framing to the artifact</span>
+        <span class="n">best_artifact</span><span class="o">.</span><span class="n">add_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_evaluation</span><span class="p">,</span> <span class="n">fr</span><span class="o">=</span><span class="n">framing</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">best_artifact</span></div>
+
+<div class="viewcode-block" id="MusicAgent.act"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.act">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">act</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Agent acts by inventing new artifacts.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#If there are artifacts available in the domain, learn from one</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">artifacts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">random_artifact</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">artifacts</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">memorize</span><span class="p">(</span><span class="n">random_artifact</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">learn</span><span class="p">(</span><span class="n">random_artifact</span><span class="p">)</span>
+        
+        <span class="c1">#Now invent a new one</span>
+        <span class="n">artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">memorize</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">learn</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        
+        <span class="c1">#Ask the service for the address of a random agent to contact</span>
+        <span class="n">service_agent</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">service_addr</span><span class="p">)</span>
+        <span class="n">agent_address</span> <span class="o">=</span> <span class="k">await</span> <span class="n">service_agent</span><span class="o">.</span><span class="n">request_random_agent</span><span class="p">()</span>
+        
+        <span class="c1">#If the random agent isn&#39;t itself, then contact the agent to ask </span>
+        <span class="c1">#for an opinion and to get one of their artifacts</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">agent_address</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="p">:</span>
+            <span class="n">random_agent</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">agent_address</span><span class="p">)</span>
+            <span class="n">their_opinion</span><span class="p">,</span> <span class="n">requested_artifact</span> <span class="o">=</span> <span class="k">await</span> <span class="n">random_agent</span><span class="o">.</span><span class="n">request_artifact_exchange</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        
+            <span class="c1">#Make an opinion on their artifact</span>
+            <span class="n">my_opinion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">requested_artifact</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        
+            <span class="c1">#If this agent liked the returned artifact, then learn from it</span>
+            <span class="k">if</span> <span class="n">my_opinion</span> <span class="o">&gt;</span> <span class="mf">0.85</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">memorize</span><span class="p">(</span><span class="n">requested_artifact</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">learn</span><span class="p">(</span><span class="n">requested_artifact</span><span class="p">)</span>
+            
+            <span class="c1">#Read the invention method used from the artifact</span>
+            <span class="n">method_idx</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">record_feedback</span><span class="p">(</span><span class="n">method_idx</span><span class="p">,</span> <span class="n">their_opinion</span><span class="p">)</span>
+            
+            <span class="c1">#Consider new methods of inventing music using these lyrics as inspiration </span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reconsider_invention_methods</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            
+            <span class="c1">#Also, if the other agent didn&#39;t like this one&#39;s artifact, try once more</span>
+            <span class="k">if</span> <span class="n">their_opinion</span> <span class="o">&lt;</span> <span class="mf">0.85</span><span class="p">:</span>
+                <span class="n">artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+                
+        <span class="c1">#Now give the environment the final artifact for voting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">add_candidate</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span></div>
+        
+    <span class="nd">@aiomas</span><span class="o">.</span><span class="n">expose</span>
+<div class="viewcode-block" id="MusicAgent.request_artifact_exchange"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.request_artifact_exchange">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">request_artifact_exchange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">senders_artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Allows an agent to send an artifact to another agent in exchange</span>
+<span class="sd">        for their opinion on the artifact, and an artifact of their own.</span>
+<span class="sd">        </span>
+<span class="sd">        :param artifact sender_artifact: The artifact the sender wishes to be evaluated</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">my_opinion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">senders_artifact</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="c1">#Learn from this artifact if it&#39;s liked and return the favor</span>
+        <span class="k">if</span> <span class="n">my_opinion</span> <span class="o">&gt;</span> <span class="mf">0.85</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">memorize</span><span class="p">(</span><span class="n">senders_artifact</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">learn</span><span class="p">(</span><span class="n">senders_artifact</span><span class="p">)</span>
+            <span class="n">my_artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#If their artifact was not good, give them something random from memory</span>
+            <span class="c1">#if one is available, and if it&#39;s not then create one.</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">my_artifact</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">my_artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="n">my_opinion</span><span class="p">,</span> <span class="n">my_artifact</span></div>
+    
+<div class="viewcode-block" id="MusicAgent.record_feedback"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.record_feedback">[docs]</a>    <span class="k">def</span> <span class="nf">record_feedback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_idx</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Allows an agent to be notified of feedback results so it can score its own</span>
+<span class="sd">        invention methods</span>
+<span class="sd">        :param int method_idx: The invention method index in its own invention_methods</span>
+<span class="sd">        :param double vote_result: The voting result the artifact accumulated</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">method_used</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">[</span><span class="n">method_idx</span><span class="p">]</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">method_used</span><span class="o">.</span><span class="n">times_utilized</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">times</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">avg</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">avg</span> <span class="o">=</span> <span class="n">method_used</span><span class="o">.</span><span class="n">average_rating</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">times</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">[</span><span class="n">method_idx</span><span class="p">]</span><span class="o">.</span><span class="n">times_utilized</span> <span class="o">=</span> <span class="n">times</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">[</span><span class="n">method_idx</span><span class="p">]</span><span class="o">.</span><span class="n">average_rating</span> <span class="o">=</span> <span class="p">(</span><span class="n">avg</span> <span class="o">+</span> <span class="n">result</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">times</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Sus Roy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

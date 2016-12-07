@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>music_util module &#8212; MFMC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-music_util">
+<span id="music-util-module"></span><h1>music_util module<a class="headerlink" href="#module-music_util" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="music_util.MusicHelper">
+<em class="property">class </em><code class="descclassname">music_util.</code><code class="descname">MusicHelper</code><a class="reference internal" href="_modules/music_util.html#MusicHelper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_util.MusicHelper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A class that contains methods for creating music from text, analyzing the music, and modifying it.</p>
+<dl class="method">
+<dt id="music_util.MusicHelper.conform_notes_to_key">
+<code class="descname">conform_notes_to_key</code><span class="sig-paren">(</span><em>notes</em>, <em>music_key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_util.html#MusicHelper.conform_notes_to_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_util.MusicHelper.conform_notes_to_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a list of notes, and a music key and ensures that every note either
+belongs to that key or to its relative key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>notes</strong> (<em>str</em>) &#8211; The notes to be matched</li>
+<li><strong>music_key</strong> (<em>str</em>) &#8211; The name of the key to be matched (i.e. &#8216;cmajor&#8217;)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of notes that are all in the specified key or its relative key.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="music_util.MusicHelper.convert_phrase_to_notes">
+<em class="property">static </em><code class="descname">convert_phrase_to_notes</code><span class="sig-paren">(</span><em>phrase</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_util.html#MusicHelper.convert_phrase_to_notes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_util.MusicHelper.convert_phrase_to_notes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a phrase and converts it to musical notes by extracting characters that represent
+musical notes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>phrase</strong> (<em>str</em>) &#8211; Any string of text, to be converted to musical notes</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list of notes extracted from the string.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="music_util.MusicHelper.derive_tracks_from_lyrics">
+<code class="descname">derive_tracks_from_lyrics</code><span class="sig-paren">(</span><em>lyrics</em>, <em>notes</em>, <em>track_duration</em>, <em>method</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_util.html#MusicHelper.derive_tracks_from_lyrics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_util.MusicHelper.derive_tracks_from_lyrics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempts to find patterns in lyrics to be paired with the given notes
+to create new tracks of a specified duration</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="music_util.MusicHelper.determine_dominant_key">
+<code class="descname">determine_dominant_key</code><span class="sig-paren">(</span><em>notes</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_util.html#MusicHelper.determine_dominant_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_util.MusicHelper.determine_dominant_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a list of notes and compares it to each key, then returns the key which the
+notes match best.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>notes</strong> (<em>str</em>) &#8211; A list of notes in string format or as a pyknon.music.NoteSeq.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A string representation of the dominant key (i.e. &#8216;fminor&#8217;)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="music_util.MusicHelper.determine_instrument">
+<em class="property">static </em><code class="descname">determine_instrument</code><span class="sig-paren">(</span><em>midi_int</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_util.html#MusicHelper.determine_instrument"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_util.MusicHelper.determine_instrument" title="Permalink to this definition">¶</a></dt>
+<dd><p>Static method that identifies a category and instrument for a given int representing a MIDI instrument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>midi_int</strong> (<em>int</em>) &#8211; The int of the MIDI instrument</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A tuple containing the category and instrument name for the given int.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="music_util.MusicHelper.determine_theme">
+<em class="property">static </em><code class="descname">determine_theme</code><span class="sig-paren">(</span><em>word</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_util.html#MusicHelper.determine_theme"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_util.MusicHelper.determine_theme" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method takes a word supplied by the agent and attempts to match items
+as a substring of themes encompassed by word lists.  If a matching theme
+is found then a list of MIDI instrument numbers is returned.
+<em>A substring will match (word=old, will_match=olden)</em></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>word</strong> (<em>str</em>) &#8211; The word to use as a potential theme match</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A tuple containing tempo and a list of MIDI instruments in int format.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="music_util.MusicHelper.read_keys">
+<code class="descname">read_keys</code><span class="sig-paren">(</span><em>mypath='keys/'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_util.html#MusicHelper.read_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_util.MusicHelper.read_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialization method that reads in all available keys, in a specified path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mypath</strong> (<em>str</em>) &#8211; The location of the keys to be read</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="music_util.MusicHelper.relative_keys">
+<code class="descname">relative_keys</code><em class="property"> = {'aflatmajor': 'fminor', 'emajor': 'csharpminor', 'fminor': 'aflatmajor', 'bflatmajor': 'gminor', 'gminor': 'bflatmajor', 'aminor': 'cmajor', 'eminor': 'gmajor', 'dflatmajor': 'bflatminor', 'eflatmajor': 'cminor', 'fsharpminor': 'amajor', 'fsharpmajor': 'dsharpminor', 'bminor': 'dmajor', 'gmajor': 'eminor', 'dmajor': 'bminor', 'bmajor': 'gsharpminor', 'csharpminor': 'emajor', 'cminor': 'eflatmajor', 'fmajor': 'dminor', 'gsharpminor': 'bmajor', 'cmajor': 'aminor', 'dsharpminor': 'fsharpmajor', 'amajor': 'fsharpminor', 'bflatminor': 'dflatmajor', 'dminor': 'fmajor'}</em><a class="headerlink" href="#music_util.MusicHelper.relative_keys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/music_util.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Sus Roy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/music_util.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

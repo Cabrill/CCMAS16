@@ -1,0 +1,354 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mc &#8212; MFMC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for mc</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">.. py:module:: markov</span>
+<span class="sd">    :platform: Unix</span>
+
+<span class="sd">First Week&#39;s homework.</span>
+<span class="sd">Student name:  Jared Bagley</span>
+<span class="sd">Student Username: JBagley</span>
+<span class="sd">Student ID: 014737165</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">nltk</span>
+<span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<div class="viewcode-block" id="sanitize"><a class="viewcode-back" href="../mc.html#mc.sanitize">[docs]</a><span class="k">def</span> <span class="nf">sanitize</span><span class="p">(</span><span class="n">token_list</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Sanitizes a token list by only accepting valid words,</span>
+<span class="sd">    and removes any words with non-printable characters. This will</span>
+<span class="sd">    allow any alphanumeric character and the underscore, which should be </span>
+<span class="sd">    sufficient, but also filtering out characters which are considered</span>
+<span class="sd">    un-printable by a string.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="c1"># Using regular expression of a valid word</span>
+    <span class="n">is_word</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;\w&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Filter out wordless punctuation</span>
+    <span class="n">new_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">token_list</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">value</span> <span class="ow">in</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">token</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">r&#39;</span><span class="se">\&#39;\&#39;</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">r&#39;\`\`&#39;</span><span class="p">,</span> <span class="s1">&#39;``&#39;</span><span class="p">,</span> <span class="s1">&#39;--&#39;</span><span class="p">))]</span>
+    
+    <span class="c1"># Only select valid words, and end in a period</span>
+    <span class="n">new_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">new_list</span> <span class="k">if</span> <span class="n">is_word</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">token</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Filter out any words with non-printable characters</span>
+    <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">new_list</span><span class="p">:</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">printable</span><span class="p">,</span> <span class="n">token</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">new_list</span><span class="p">;</span></div>
+    
+<div class="viewcode-block" id="likelihood"><a class="viewcode-back" href="../mc.html#mc.likelihood">[docs]</a><span class="k">def</span> <span class="nf">likelihood</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">state_transition_probabilities</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Calculates the probability of text occurring given the responsible</span>
+<span class="sd">    state transition probability model.  It does this by assuming the initial</span>
+<span class="sd">    word has a 100% probability, and then tallies the full text probability by</span>
+<span class="sd">    multiplying the intial probability by the probability of the next word,</span>
+<span class="sd">    continuing until every consecutive probability is incorporated.  This results in</span>
+<span class="sd">    the combinatorial probability of the full text.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1">#Assume initial probability of 0%</span>
+    <span class="n">probability</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1">#Add spaces between periods/commas so the preceding word isn&#39;t treated differently.</span>
+    <span class="n">token_list</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot; .&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot; ,&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="c1">#Sanitize the token list</span>
+    <span class="n">token_list</span> <span class="o">=</span> <span class="n">sanitize</span><span class="p">(</span><span class="n">token_list</span><span class="p">)</span>
+    
+    <span class="c1">#Determine order of state transitions being used</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">determineOrder</span><span class="p">(</span><span class="n">state_transition_probabilities</span><span class="p">)</span>
+    
+    <span class="c1">#Enumerate through the words, and find the probability of the word that follows</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">token_list</span><span class="p">):</span>
+        <span class="n">prev_token</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="n">order</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">token_list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">prev_token</span> <span class="o">+=</span> <span class="n">token_list</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span>
+            <span class="n">prev_token</span> <span class="o">=</span> <span class="n">prev_token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">prev_token</span> <span class="ow">in</span> <span class="n">state_transition_probabilities</span><span class="p">):</span>
+                <span class="c1">#Set an initial probability if necessary</span>
+                <span class="n">probability</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">probability</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">probability</span>
+                <span class="c1">#Determine next word</span>
+                <span class="n">next_token</span> <span class="o">=</span> <span class="n">token_list</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="c1">#Determine next word&#39;s probability from this word</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">next_token</span> <span class="ow">in</span> <span class="n">state_transition_probabilities</span><span class="p">[</span><span class="n">prev_token</span><span class="p">]):</span>
+                    <span class="n">next_word_prob</span> <span class="o">=</span> <span class="n">state_transition_probabilities</span><span class="p">[</span><span class="n">prev_token</span><span class="p">][</span><span class="n">next_token</span><span class="p">]</span>
+                    <span class="c1">#Multiply probability by next word&#39;s probability</span>
+                    <span class="n">probability</span> <span class="o">*=</span> <span class="n">next_word_prob</span>
+
+    <span class="k">return</span> <span class="n">probability</span><span class="p">;</span></div>
+    
+<div class="viewcode-block" id="determineOrder"><a class="viewcode-back" href="../mc.html#mc.determineOrder">[docs]</a><span class="k">def</span> <span class="nf">determineOrder</span><span class="p">(</span><span class="n">state_transition_probabilities</span><span class="p">):</span>
+    <span class="c1"># Calculate the order used by the state transition probabilities list</span>
+    <span class="n">maxOrder</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">state_transition_probabilities</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># If the list is empty (no spaces), order 1, otherwise it&#39;s 1+# of spaces</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">maxOrder</span><span class="p">:</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">maxOrder</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    
+    <span class="k">return</span> <span class="n">order</span><span class="p">;</span>   </div>
+    
+<div class="viewcode-block" id="generate"><a class="viewcode-back" href="../mc.html#mc.generate">[docs]</a><span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="n">state_transition_probabilities</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given a model of state transition probabilities, construct a new artifact</span>
+<span class="sd">    of supplied length, starting from the initial word given, if any.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">determineOrder</span><span class="p">(</span><span class="n">state_transition_probabilities</span><span class="p">)</span>
+    <span class="c1"># Calculate the order used by the state transition probabilities list</span>
+    <span class="n">maxOrder</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">state_transition_probabilities</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># If the list is empty (no spaces), order 1, otherwise it&#39;s 1+# of spaces</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">maxOrder</span><span class="p">:</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">maxOrder</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">is_word</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;\w&#39;</span><span class="p">)</span>
+        <span class="c1">#No word chosen as start, so we determine a starting point ourself from valid choices</span>
+        <span class="n">possible_start</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">state_transition_probabilities</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">is_word</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">token</span><span class="p">)]</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_start</span><span class="p">)</span>
+    <span class="k">elif</span>  <span class="n">start</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">order</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="n">token</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">state_transition_probabilities</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">start</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Provided Start value for generate method is not in available state transitions.&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">start</span> <span class="ow">in</span> <span class="n">state_transition_probabilities</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Provided Start value for generate method is not in available state transitions.&quot;</span><span class="p">)</span>
+    
+    <span class="c1">#Record our chosen word(s)</span>
+    <span class="n">prev</span> <span class="o">=</span> <span class="n">start</span>
+    <span class="n">new_text</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">new_text</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prev</span><span class="p">)</span>
+    
+    <span class="c1"># Transform the data to a cumulative distribution function (cdf)</span>
+    <span class="n">cdfs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ_probs</span> <span class="ow">in</span> <span class="n">state_transition_probabilities</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="n">succ_probs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="c1"># Sort the list by the second index in each item and reverse it from</span>
+        <span class="c1"># highest to lowest.</span>
+        <span class="n">sorted_items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">cdf</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cumulative_sum</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">sorted_items</span><span class="p">:</span>
+            <span class="n">cumulative_sum</span> <span class="o">+=</span> <span class="n">prob</span>
+            <span class="n">cdf</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">c</span><span class="p">,</span> <span class="n">cumulative_sum</span><span class="p">])</span>
+        <span class="n">cdf</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="c1"># We fix the last because of the possible rounding errors.</span>
+        <span class="n">cdfs</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">=</span> <span class="n">cdf</span>
+    
+    <span class="c1">#Now add words so long as we haven&#39;t reached a dead end, and the length is less than the requested</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_text</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">length</span> <span class="ow">and</span> <span class="n">prev</span> <span class="ow">in</span> <span class="n">state_transition_probabilities</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">state_transition_probabilities</span><span class="p">[</span><span class="n">prev</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">rnd</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="c1"># Random number from 0 to 1</span>
+        <span class="n">cdf</span> <span class="o">=</span> <span class="n">cdfs</span><span class="p">[</span><span class="n">prev</span><span class="p">]</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">cdf</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># Go through the cdf until the cumulative probability is higher than the</span>
+        <span class="c1"># random number &#39;rnd&#39;.</span>
+        <span class="k">while</span> <span class="n">rnd</span> <span class="o">&gt;</span> <span class="n">cp</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">cp</span> <span class="o">=</span> <span class="n">cdf</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">succ</span> <span class="o">=</span> <span class="n">cdf</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">new_text</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">succ</span><span class="p">)</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_text</span><span class="p">))[</span><span class="o">-</span><span class="n">order</span><span class="p">:])</span>
+
+    <span class="c1">#Before returning the result, we add spaces between each word, but remove them between punctuation</span>
+    <span class="k">return</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">new_text</span><span class="p">))</span></div>
+    
+<div class="viewcode-block" id="format_for_printing"><a class="viewcode-back" href="../mc.html#mc.format_for_printing">[docs]</a><span class="k">def</span> <span class="nf">format_for_printing</span><span class="p">(</span><span class="n">raw_text</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Takes raw text that has resulted from a markov chain and removes spaces</span>
+<span class="sd">    between punctuation tokens, capitalizes the first word to make the, adds</span>
+<span class="sd">    a period at the end to make the sentence more readable</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">formatted_string</span> <span class="o">=</span> <span class="n">raw_text</span>
+    <span class="n">formatted_string</span><span class="o">=</span><span class="n">formatted_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; .&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="n">formatted_string</span><span class="o">=</span><span class="n">formatted_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; ,&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">)</span>
+    <span class="n">formatted_string</span><span class="o">=</span><span class="n">replace_maintaining_case</span><span class="p">(</span><span class="n">formatted_string</span><span class="p">,</span><span class="s2">&quot; n&#39;t&quot;</span><span class="p">,</span> <span class="s2">&quot;n&#39;t&quot;</span><span class="p">)</span>
+    <span class="n">formatted_string</span><span class="o">=</span><span class="n">replace_maintaining_case</span><span class="p">(</span><span class="n">formatted_string</span><span class="p">,</span><span class="s2">&quot; &#39;s&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;s&quot;</span><span class="p">)</span>
+    <span class="n">formatted_string</span><span class="o">=</span><span class="n">replace_maintaining_case</span><span class="p">(</span><span class="n">formatted_string</span><span class="p">,</span><span class="s2">&quot; &#39;ll&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;ll&quot;</span><span class="p">)</span>
+    <span class="n">formatted_string</span><span class="o">=</span><span class="n">replace_maintaining_case</span><span class="p">(</span><span class="n">formatted_string</span><span class="p">,</span><span class="s2">&quot; &#39;ve&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;ve&quot;</span><span class="p">)</span>
+    <span class="n">formatted_string</span><span class="o">=</span><span class="n">replace_maintaining_case</span><span class="p">(</span><span class="n">formatted_string</span><span class="p">,</span><span class="s2">&quot; &#39;re&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;re&quot;</span><span class="p">)</span>
+    <span class="n">formatted_string</span><span class="o">=</span><span class="n">replace_maintaining_case</span><span class="p">(</span><span class="n">formatted_string</span><span class="p">,</span><span class="s2">&quot; &#39;d&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;d&quot;</span><span class="p">)</span>
+    <span class="n">formatted_string</span><span class="o">=</span><span class="n">replace_maintaining_case</span><span class="p">(</span><span class="n">formatted_string</span><span class="p">,</span><span class="s2">&quot; &#39;m&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;m&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Remove any trailing whitespace</span>
+    <span class="n">formatted_string</span> <span class="o">=</span> <span class="n">formatted_string</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    
+    <span class="c1"># Add a period, if necessary</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">formatted_string</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span> <span class="o">==</span> <span class="s2">&quot;.&quot;</span><span class="p">:</span>
+        <span class="n">formatted_string</span> <span class="o">=</span> <span class="n">formatted_string</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span>
+    
+    <span class="c1"># Capitalize the first letter without changing case of other letters</span>
+    <span class="k">if</span> <span class="n">formatted_string</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">):</span>
+        <span class="n">formatted_string</span> <span class="o">=</span>  <span class="n">formatted_string</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">formatted_string</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">formatted_string</span> <span class="o">=</span>  <span class="n">formatted_string</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">formatted_string</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    
+    <span class="k">return</span> <span class="n">formatted_string</span></div>
+    
+<div class="viewcode-block" id="replace_maintaining_case"><a class="viewcode-back" href="../mc.html#mc.replace_maintaining_case">[docs]</a><span class="k">def</span> <span class="nf">replace_maintaining_case</span><span class="p">(</span><span class="n">raw_text</span><span class="p">,</span> <span class="n">find_text</span><span class="p">,</span> <span class="n">replace_text</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Takes raw text, and something to be replaced, but maintains the original_text</span>
+<span class="sd">    case of the letters being replaced</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">find_text</span><span class="p">,</span>
+             <span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">replacement_func</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">replace_text</span><span class="p">),</span>
+             <span class="n">raw_text</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">)</span></div>
+             
+<div class="viewcode-block" id="replacement_func"><a class="viewcode-back" href="../mc.html#mc.replacement_func">[docs]</a><span class="k">def</span> <span class="nf">replacement_func</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">repl_pattern</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Function for replacing text, found on StackOverflow:</span>
+<span class="sd">    http://stackoverflow.com/questions/9208786/best-way-to-do-a-case-insensitive-replace-but-match-the-case-of-the-word-to-be-r</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">match_str</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">repl</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">r_char</span> <span class="k">if</span> <span class="n">m_char</span><span class="o">.</span><span class="n">islower</span><span class="p">()</span> <span class="k">else</span> <span class="n">r_char</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                   <span class="k">for</span> <span class="n">r_char</span><span class="p">,</span> <span class="n">m_char</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">repl_pattern</span><span class="p">,</span> <span class="n">match_str</span><span class="p">)])</span>
+    <span class="n">repl</span> <span class="o">+=</span> <span class="n">repl_pattern</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">match_str</span><span class="p">):]</span>
+    <span class="k">return</span> <span class="n">repl</span></div>
+
+<div class="viewcode-block" id="markov_chain"><a class="viewcode-back" href="../mc.html#mc.markov_chain">[docs]</a><span class="k">def</span> <span class="nf">markov_chain</span><span class="p">(</span><span class="n">raw_text</span><span class="p">,</span> <span class="n">should_sanitize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Derive a model of state transition probabilities from supplied raw </span>
+<span class="sd">    text, after sanitizing the text, unless specified not to.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># Replace more than one subsequent whitespace chars with one space</span>
+    <span class="n">raw_text</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">r&#39;\s+&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">raw_text</span><span class="p">)</span>
+    <span class="n">raw_text</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">r&#39;\t+&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">raw_text</span><span class="p">)</span>
+
+    <span class="c1"># Tokenize the text into sentences.</span>
+    <span class="n">sentences</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">sent_tokenize</span><span class="p">(</span><span class="n">raw_text</span><span class="p">)</span>
+
+    <span class="c1"># Tokenize each sentence to words. Each item in &#39;words&#39; is a list with</span>
+    <span class="c1"># tokenized words from that list.</span>
+    <span class="n">tokenized_sentences</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sentences</span><span class="p">:</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">tokenized_sentences</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+
+    <span class="c1"># Sanitize the tokens of each sentence</span>
+    <span class="k">if</span> <span class="n">should_sanitize</span><span class="p">:</span>
+        <span class="n">tokenized_sentences</span> <span class="o">=</span> <span class="p">[</span><span class="n">sanitize</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span> <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">tokenized_sentences</span><span class="p">]</span>
+
+    <span class="c1"># Now we are ready to create the state transitions. However, this time we</span>
+    <span class="c1"># count the state transitions from each sentence at a time.</span>
+    <span class="n">transitions</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokenized_sentences</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">-</span><span class="n">order</span><span class="p">):</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">order</span><span class="p">):</span>
+                <span class="n">pred</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="o">+</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">succ</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="o">+</span><span class="n">order</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">pred</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">transitions</span><span class="p">:</span>
+                <span class="c1"># Predecessor key is not yet in the outer dictionary, so we create</span>
+                <span class="c1"># a new dictionary for it.</span>
+                <span class="n">transitions</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">succ</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">transitions</span><span class="p">[</span><span class="n">pred</span><span class="p">]:</span>
+                <span class="c1"># Successor key is not yet in the inner dictionary, so we start</span>
+                <span class="c1"># counting from one.</span>
+                <span class="n">transitions</span><span class="p">[</span><span class="n">pred</span><span class="p">][</span><span class="n">succ</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Otherwise we just add one to the existing value.</span>
+                <span class="n">transitions</span><span class="p">[</span><span class="n">pred</span><span class="p">][</span><span class="n">succ</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">1.0</span>
+    
+    <span class="c1"># Compute total number of successors for each state</span>
+    <span class="n">totals</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ_counts</span> <span class="ow">in</span> <span class="n">transitions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">totals</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">succ_counts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="c1">#print(pred,totals[pred])</span>
+    
+    <span class="c1"># Compute the probability for each successor given the predecessor.</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ_counts</span> <span class="ow">in</span> <span class="n">transitions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">probs</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">succ</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">succ_counts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">probs</span><span class="p">[</span><span class="n">pred</span><span class="p">][</span><span class="n">succ</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span> <span class="o">/</span> <span class="n">totals</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">probs</span><span class="p">,</span> <span class="n">transitions</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Sus Roy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

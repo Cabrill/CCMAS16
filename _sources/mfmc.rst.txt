@@ -1,0 +1,7 @@
+mfmc module
+===========
+
+.. automodule:: mfmc
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,0 +1,7 @@
+music_util module
+=================
+
+.. automodule:: music_util
+    :members:
+    :undoc-members:
+    :show-inheritance:

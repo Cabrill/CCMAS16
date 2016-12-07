@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mc module &#8212; MFMC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-mc">
+<span id="mc-module"></span><h1>mc module<a class="headerlink" href="#module-mc" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-markov"></span><p>First Week&#8217;s homework.
+Student name:  Jared Bagley
+Student Username: JBagley
+Student ID: 014737165</p>
+<dl class="function">
+<dt id="mc.determineOrder">
+<code class="descclassname">mc.</code><code class="descname">determineOrder</code><span class="sig-paren">(</span><em>state_transition_probabilities</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#determineOrder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.determineOrder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mc.format_for_printing">
+<code class="descclassname">mc.</code><code class="descname">format_for_printing</code><span class="sig-paren">(</span><em>raw_text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#format_for_printing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.format_for_printing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes raw text that has resulted from a markov chain and removes spaces
+between punctuation tokens, capitalizes the first word to make the, adds
+a period at the end to make the sentence more readable</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mc.generate">
+<code class="descclassname">mc.</code><code class="descname">generate</code><span class="sig-paren">(</span><em>state_transition_probabilities</em>, <em>length=10</em>, <em>start=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a model of state transition probabilities, construct a new artifact
+of supplied length, starting from the initial word given, if any.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mc.likelihood">
+<code class="descclassname">mc.</code><code class="descname">likelihood</code><span class="sig-paren">(</span><em>text</em>, <em>state_transition_probabilities</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#likelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the probability of text occurring given the responsible
+state transition probability model.  It does this by assuming the initial
+word has a 100% probability, and then tallies the full text probability by
+multiplying the intial probability by the probability of the next word,
+continuing until every consecutive probability is incorporated.  This results in
+the combinatorial probability of the full text.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mc.markov_chain">
+<code class="descclassname">mc.</code><code class="descname">markov_chain</code><span class="sig-paren">(</span><em>raw_text</em>, <em>should_sanitize=True</em>, <em>order=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#markov_chain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.markov_chain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Derive a model of state transition probabilities from supplied raw 
+text, after sanitizing the text, unless specified not to.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mc.replace_maintaining_case">
+<code class="descclassname">mc.</code><code class="descname">replace_maintaining_case</code><span class="sig-paren">(</span><em>raw_text</em>, <em>find_text</em>, <em>replace_text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#replace_maintaining_case"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.replace_maintaining_case" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes raw text, and something to be replaced, but maintains the original_text
+case of the letters being replaced</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mc.replacement_func">
+<code class="descclassname">mc.</code><code class="descname">replacement_func</code><span class="sig-paren">(</span><em>match</em>, <em>repl_pattern</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#replacement_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.replacement_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function for replacing text, found on StackOverflow:
+<a class="reference external" href="http://stackoverflow.com/questions/9208786/best-way-to-do-a-case-insensitive-replace-but-match-the-case-of-the-word-to-be-r">http://stackoverflow.com/questions/9208786/best-way-to-do-a-case-insensitive-replace-but-match-the-case-of-the-word-to-be-r</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mc.sanitize">
+<code class="descclassname">mc.</code><code class="descname">sanitize</code><span class="sig-paren">(</span><em>token_list</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#sanitize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.sanitize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sanitizes a token list by only accepting valid words,
+and removes any words with non-printable characters. This will
+allow any alphanumeric character and the underscore, which should be 
+sufficient, but also filtering out characters which are considered
+un-printable by a string.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/mc.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Sus Roy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/mc.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

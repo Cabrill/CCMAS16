@@ -1,0 +1,624 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>music_util &#8212; MFMC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for music_util</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pyknon</span><span class="o">,</span> <span class="nn">operator</span><span class="o">,</span> <span class="nn">numpy</span><span class="o">,</span> <span class="nn">random</span><span class="o">,</span> <span class="nn">nltk</span><span class="o">,</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">listdir</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">isfile</span><span class="p">,</span> <span class="n">join</span>
+<span class="kn">from</span> <span class="nn">pyknon.music</span> <span class="k">import</span> <span class="n">NoteSeq</span><span class="p">,</span> <span class="n">Rest</span>
+
+
+<div class="viewcode-block" id="MusicHelper"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper">[docs]</a><span class="k">class</span> <span class="nc">MusicHelper</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    A class that contains methods for creating music from text, analyzing the music, and modifying it.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1">#Hard-coded list of musical keys and their relative keys</span>
+    <span class="n">relative_keys</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;cmajor&#39;</span><span class="p">:</span><span class="s1">&#39;aminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;gmajor&#39;</span><span class="p">:</span><span class="s1">&#39;eminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;dmajor&#39;</span><span class="p">:</span><span class="s1">&#39;bminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;amajor&#39;</span><span class="p">:</span><span class="s1">&#39;fsharpminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;emajor&#39;</span><span class="p">:</span><span class="s1">&#39;csharpminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;bmajor&#39;</span><span class="p">:</span><span class="s1">&#39;gsharpminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;fsharpmajor&#39;</span><span class="p">:</span><span class="s1">&#39;dsharpminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;dflatmajor&#39;</span><span class="p">:</span><span class="s1">&#39;bflatminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;aflatmajor&#39;</span><span class="p">:</span><span class="s1">&#39;fminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;eflatmajor&#39;</span><span class="p">:</span><span class="s1">&#39;cminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;bflatmajor&#39;</span><span class="p">:</span><span class="s1">&#39;gminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;fmajor&#39;</span><span class="p">:</span><span class="s1">&#39;dminor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;aminor&#39;</span><span class="p">:</span><span class="s1">&#39;cmajor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;eminor&#39;</span><span class="p">:</span><span class="s1">&#39;gmajor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;bminor&#39;</span><span class="p">:</span><span class="s1">&#39;dmajor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;fsharpminor&#39;</span><span class="p">:</span><span class="s1">&#39;amajor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;csharpminor&#39;</span><span class="p">:</span><span class="s1">&#39;emajor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;gsharpminor&#39;</span><span class="p">:</span><span class="s1">&#39;bmajor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;dsharpminor&#39;</span><span class="p">:</span><span class="s1">&#39;fsharpmajor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;bflatminor&#39;</span><span class="p">:</span><span class="s1">&#39;dflatmajor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;fminor&#39;</span><span class="p">:</span><span class="s1">&#39;aflatmajor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;cminor&#39;</span><span class="p">:</span><span class="s1">&#39;eflatmajor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;gminor&#39;</span><span class="p">:</span><span class="s1">&#39;bflatmajor&#39;</span><span class="p">,</span>\
+    <span class="s1">&#39;dminor&#39;</span><span class="p">:</span><span class="s1">&#39;fmajor&#39;</span>
+    <span class="p">}</span> 
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">music_keys</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_keys</span><span class="p">()</span>
+        
+<div class="viewcode-block" id="MusicHelper.read_keys"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper.read_keys">[docs]</a>    <span class="k">def</span> <span class="nf">read_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mypath</span><span class="o">=</span><span class="s2">&quot;keys/&quot;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initialization method that reads in all available keys, in a specified path.</span>
+<span class="sd">        </span>
+<span class="sd">        :param str mypath: The location of the keys to be read</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">key_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span>  <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">mypath</span><span class="p">)</span> <span class="k">if</span> <span class="n">isfile</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">mypath</span><span class="p">,</span> <span class="n">f</span><span class="p">))]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">key_files</span><span class="p">:</span>
+            <span class="n">new_key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">key_notes</span> <span class="o">=</span> <span class="n">NoteSeq</span><span class="p">(</span><span class="s2">&quot;file://&quot;</span> <span class="o">+</span> <span class="n">mypath</span> <span class="o">+</span> <span class="n">key</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">music_keys</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">key_notes</span></div>
+    
+<div class="viewcode-block" id="MusicHelper.determine_dominant_key"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper.determine_dominant_key">[docs]</a>    <span class="k">def</span> <span class="nf">determine_dominant_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">notes</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Takes a list of notes and compares it to each key, then returns the key which the</span>
+<span class="sd">        notes match best.</span>
+<span class="sd">        </span>
+<span class="sd">        :param str notes: A list of notes in string format or as a pyknon.music.NoteSeq.</span>
+<span class="sd">        :returns: A string representation of the dominant key (i.e. &#39;fminor&#39;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">notes</span><span class="p">,</span> <span class="n">pyknon</span><span class="o">.</span><span class="n">music</span><span class="o">.</span><span class="n">NoteSeq</span><span class="p">):</span>
+            <span class="n">test_seq</span> <span class="o">=</span> <span class="n">notes</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">notes</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">test_seq</span> <span class="o">=</span> <span class="n">NoteSeq</span><span class="p">(</span><span class="n">notes</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">notes</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">test_seq</span> <span class="o">=</span> <span class="n">NoteSeq</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">notes</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Notes supplied to determine_dominant_key not in a known format (list, string, NoteSeq)&#39;</span><span class="p">)</span>
+    
+        <span class="n">key_score</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_keys</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">key_score</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">note</span> <span class="ow">in</span> <span class="n">test_seq</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_keys</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">note</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="n">key_score</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">key_score</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        
+        <span class="n">dominant_key</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">key_score</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key_score</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dominant_key</span></div>
+    
+    <span class="nd">@staticmethod</span>    
+<div class="viewcode-block" id="MusicHelper.convert_phrase_to_notes"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper.convert_phrase_to_notes">[docs]</a>    <span class="k">def</span> <span class="nf">convert_phrase_to_notes</span><span class="p">(</span><span class="n">phrase</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Takes a phrase and converts it to musical notes by extracting characters that represent</span>
+<span class="sd">        musical notes.</span>
+<span class="sd">        </span>
+<span class="sd">        :param str phrase: Any string of text, to be converted to musical notes</span>
+<span class="sd">        :returns: A list of notes extracted from the string.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">notes</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">phrase</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">char</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span>
+                    <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;C&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;d&#39;</span><span class="p">:</span>
+                    <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;e&#39;</span><span class="p">:</span>
+                    <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;E&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;f&#39;</span><span class="p">:</span>
+                    <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;g&#39;</span><span class="p">:</span>
+                    <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;G&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span>
+                    <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span>
+                    <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">)</span>
+                    
+        <span class="k">return</span> <span class="n">notes</span></div>
+    
+<div class="viewcode-block" id="MusicHelper.conform_notes_to_key"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper.conform_notes_to_key">[docs]</a>    <span class="k">def</span> <span class="nf">conform_notes_to_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">notes</span><span class="p">,</span> <span class="n">music_key</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Takes a list of notes, and a music key and ensures that every note either</span>
+<span class="sd">        belongs to that key or to its relative key.</span>
+<span class="sd">        </span>
+<span class="sd">        :param str notes: The notes to be matched</span>
+<span class="sd">        :param str music_key: The name of the key to be matched (i.e. &#39;cmajor&#39;)</span>
+<span class="sd">        :returns: A list of notes that are all in the specified key or its relative key.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">notes</span><span class="p">,</span> <span class="n">NoteSeq</span><span class="p">):</span>
+            <span class="n">test_notes</span> <span class="o">=</span> <span class="n">notes</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">test_notes</span> <span class="o">=</span> <span class="n">NoteSeq</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">notes</span><span class="p">))</span>
+
+        <span class="n">new_note_list</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="n">key_notes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_keys</span><span class="p">[</span><span class="n">music_key</span><span class="p">]</span>
+        <span class="n">relative_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_keys</span><span class="p">[</span><span class="n">music_key</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="n">relative_key</span><span class="p">:</span>
+            <span class="n">relative_key_notes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_keys</span><span class="p">[</span><span class="n">relative_key</span><span class="p">]</span>
+            
+        <span class="k">for</span> <span class="n">note</span> <span class="ow">in</span> <span class="n">test_notes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">note</span> <span class="ow">in</span> <span class="n">key_notes</span> <span class="ow">or</span> <span class="n">note</span> <span class="ow">in</span> <span class="n">relative_key_notes</span><span class="p">:</span>
+                <span class="n">new_note_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">note</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_note</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">key_notes</span> <span class="o">+</span> <span class="n">relative_key_notes</span><span class="p">)</span>
+                <span class="n">new_note_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_note</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">new_note_list</span></div>
+        
+<div class="viewcode-block" id="MusicHelper.derive_tracks_from_lyrics"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper.derive_tracks_from_lyrics">[docs]</a>    <span class="k">def</span> <span class="nf">derive_tracks_from_lyrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">,</span> <span class="n">notes</span><span class="p">,</span> <span class="n">track_duration</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempts to find patterns in lyrics to be paired with the given notes</span>
+<span class="sd">        to create new tracks of a specified duration</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">num_notes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">notes</span><span class="p">)</span>
+        <span class="n">lyrics_sentences</span> <span class="o">=</span> <span class="n">lyrics</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="c1">#Remove tiny sentences, if any</span>
+        <span class="n">lyrics_sentences</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">lyrics_sentences</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">]</span>
+        <span class="n">num_sentences</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyrics_sentences</span><span class="p">)</span>
+        
+        <span class="n">track_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="c1">#Skip first sentence, as the Lead track will be based on it already</span>
+        <span class="c1">#otherwise create a track for each sentence</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="n">num_sentences</span><span class="p">)):</span>
+            <span class="c1">#Count the words in this sentence</span>
+            <span class="n">lyric_sentence</span> <span class="o">=</span> <span class="n">lyrics_sentences</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">lyric_words</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">lyric_sentence</span><span class="p">)</span>
+            <span class="n">num_words</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyric_words</span><span class="p">)</span>
+            <span class="c1">#Count the number of characters in each word</span>
+            <span class="n">list_of_char_counts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">lyric_words</span><span class="p">)):</span>
+                <span class="n">list_of_char_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lyric_words</span><span class="p">[</span><span class="n">j</span><span class="p">]))</span>
+            <span class="n">num_chars_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">cnt</span> <span class="k">for</span> <span class="n">cnt</span> <span class="ow">in</span> <span class="n">list_of_char_counts</span><span class="p">])</span>
+
+            <span class="c1">#Every other track picks a pattern length differently</span>
+            <span class="c1">#but all tracks use the agent&#39;s invention methods</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">pattern_length</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">lyric_sentence</span><span class="p">)</span>
+                <span class="n">pattern_accent</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">1</span><span class="p">](</span><span class="n">lyric_sentence</span><span class="p">)</span>
+                <span class="n">accent_occur</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">2</span><span class="p">](</span><span class="n">lyric_sentence</span><span class="p">)</span>
+                <span class="n">inversion_accent</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">3</span><span class="p">](</span><span class="n">lyric_sentence</span><span class="p">)</span>
+                <span class="n">inversion_occur</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">4</span><span class="p">](</span><span class="n">lyric_sentence</span><span class="p">)</span> 
+                <span class="c1">#Aim to start shortly before the lead track</span>
+                <span class="n">target_duration</span> <span class="o">=</span> <span class="n">track_duration</span> <span class="o">*</span> <span class="mf">1.2</span>
+                <span class="n">note_vol</span> <span class="o">=</span> <span class="mi">85</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pattern_length</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">4</span><span class="p">](</span><span class="n">lyric_sentence</span><span class="p">)</span>
+                <span class="n">pattern_accent</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">3</span><span class="p">](</span><span class="n">lyric_sentence</span><span class="p">)</span>
+                <span class="n">accent_occur</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">2</span><span class="p">](</span><span class="n">lyric_sentence</span><span class="p">)</span>
+                <span class="n">inversion_accent</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">1</span><span class="p">](</span><span class="n">lyric_sentence</span><span class="p">)</span> 
+                <span class="n">inversion_occur</span> <span class="o">=</span> <span class="n">method</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">lyric_sentence</span><span class="p">)</span>
+                <span class="c1">#Aim for a lead-in before the other tracks</span>
+                <span class="n">target_duration</span> <span class="o">=</span> <span class="n">track_duration</span> <span class="o">*</span> <span class="mf">1.3</span>
+                <span class="n">note_vol</span> <span class="o">=</span> <span class="mi">80</span>
+
+            <span class="c1">#Give notes equal time, in accordance with represented word length, plus time for rests</span>
+            <span class="n">duration_unit</span> <span class="o">=</span> <span class="p">(</span><span class="n">target_duration</span> <span class="o">/</span> <span class="p">(</span><span class="n">num_words</span>  <span class="o">*</span> <span class="n">num_chars_total</span><span class="p">))</span> <span class="o">-</span> <span class="n">num_words</span>
+            
+            <span class="c1">#Repeat the pattern equal to the number of words in the sentence</span>
+            <span class="n">this_track</span> <span class="o">=</span> <span class="n">NoteSeq</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_words</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">pattern_length</span><span class="p">):</span>                    
+                    <span class="n">note_to_append</span> <span class="o">=</span> <span class="n">m</span> <span class="o">%</span> <span class="n">num_notes</span>
+                    <span class="n">duration_count</span> <span class="o">=</span> <span class="n">m</span> <span class="o">%</span> <span class="n">list_of_char_counts</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+                    <span class="n">note</span> <span class="o">=</span> <span class="n">notes</span><span class="p">[</span><span class="n">note_to_append</span><span class="p">]</span>
+                    <span class="n">note</span><span class="o">.</span><span class="n">volume</span> <span class="o">=</span> <span class="n">note_vol</span>
+                    
+                    <span class="c1">#Invert the pattern this time, if the invention method calls for it</span>
+                    <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="n">inversion_occur</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                        <span class="n">note</span> <span class="o">=</span> <span class="n">note</span><span class="o">.</span><span class="n">inversion</span><span class="p">(</span><span class="n">inversion_accent</span><span class="p">)</span>
+                    
+                    <span class="n">note</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">duration_count</span> <span class="o">*</span> <span class="n">duration_unit</span>
+                    <span class="c1">#Transpose this note, if the invention method calls for it</span>
+                    <span class="k">if</span> <span class="n">m</span> <span class="o">%</span> <span class="n">accent_occur</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">m</span> <span class="o">//</span> <span class="n">accent_occur</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="n">note</span> <span class="o">=</span> <span class="n">note</span><span class="o">.</span><span class="n">transposition</span><span class="p">(</span><span class="n">pattern_accent</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">note</span> <span class="o">=</span> <span class="n">note</span><span class="o">.</span><span class="n">transposition</span><span class="p">(</span><span class="o">-</span><span class="n">pattern_accent</span><span class="p">)</span>
+                    <span class="n">this_track</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">note</span><span class="p">)</span>
+                <span class="c1">#Rest for a second between tracks</span>
+                <span class="n">this_track</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Rest</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            
+            <span class="c1">#Add the completed track</span>
+            <span class="n">track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">this_track</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">track_list</span></div>
+    
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="MusicHelper.determine_theme"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper.determine_theme">[docs]</a>    <span class="k">def</span> <span class="nf">determine_theme</span><span class="p">(</span><span class="n">word</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method takes a word supplied by the agent and attempts to match items</span>
+<span class="sd">        as a substring of themes encompassed by word lists.  If a matching theme</span>
+<span class="sd">        is found then a list of MIDI instrument numbers is returned.</span>
+<span class="sd">        *A substring will match (word=old, will_match=olden)*</span>
+<span class="sd">        </span>
+<span class="sd">        :param str word: The word to use as a potential theme match</span>
+<span class="sd">        :returns: A tuple containing tempo and a list of MIDI instruments in int format.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Filter out meaningless words</span>
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;and from say her him his she had the their for one your all out ass are how has very each own off &quot;</span>\
+                    <span class="s2">&quot;fit&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;children kids young baby youth age kid bosom asleep nap quiet silence discovery learn education &quot;</span>\
+                    <span class="s2">&quot;find taught teacher lesson boy girl imagination imagine&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">160</span><span class="p">,[</span><span class="mi">75</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">])</span> <span class="c1">#76-Pan Flute, 11-Music Box, 16-Dulcimer</span>
+            
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;sky nature tree forest earth atmosphere air bird &quot;</span>\
+                    <span class="s2">&quot;tweet nest egg flight breasted morning sunrise day explore happy happiness calmly freshest &quot;</span>\
+                    <span class="s2">&quot;sail boat ocean sea pelican seagulls wings Captain sailors ship starboard port dock feathers &quot;</span>\
+                    <span class="s2">&quot;seaworthy&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="p">[</span><span class="mi">99</span><span class="p">,</span> <span class="mi">122</span><span class="p">,</span> <span class="mi">123</span><span class="p">])</span> <span class="c1">#100-Atmosphere, 123-Seashore, 124-Bird Tweet</span>
+        
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;olden yearning ancients timely slowing pine wishing wistful lonely harkening past year long ago &quot;</span>\
+                    <span class="s2">&quot;true truly travel men return&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="p">[</span><span class="mi">109</span><span class="p">,</span> <span class="mi">89</span><span class="p">,</span> <span class="mi">117</span><span class="p">])</span> <span class="c1">#110-Bagpipe, 90-Warm synth, 118-Melodic Drum</span>
+            
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;evil danger primal attacked attacking offense enemy dungeon wounded bleed blood murder &quot;</span>\
+                    <span class="s2">&quot;death kill festering mortal peril endangered threatened &quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">600</span><span class="p">,[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">85</span><span class="p">,</span> <span class="mi">114</span><span class="p">])</span> <span class="c1">#31-Distortion Guitar, 86-Voice, 115-Steel drums</span>
+        
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;voices angels choir holy blessing prayer blessed fortunate fortune lucky benefit boon &quot;</span>\
+                    <span class="s2">&quot;lucked chance godly heavenly golden happily peace above gods divine Christmas&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">180</span><span class="p">,[</span><span class="mi">48</span><span class="p">,</span> <span class="mi">52</span><span class="p">,</span> <span class="mi">98</span><span class="p">])</span> <span class="c1">#49-String Ensemble, 53-Choir Ahs, 99-Crystal</span>
+            
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;guitar solo rocked rocking tune played song strummed picked heard bass electric music &quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">240</span><span class="p">,</span> <span class="p">[</span><span class="mi">25</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">117</span><span class="p">])</span> <span class="c1">#26-Steel guitar,  33-Acoustic bass, 118-Melodic Tom</span>
+            
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;native indigenous locally primitive folklore community social friendly smallest society &quot;</span>\
+                    <span class="s2">&quot;farming garden landscape enjoyment enjoyed relaxed relaxation relaxing peaceful satisfied&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="p">[</span><span class="mi">78</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">116</span><span class="p">])</span> <span class="c1">#79-Whistle, 13-Marimba, 117-Taiko Drum</span>
+            
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;clock minutes hours seconds chronological timely&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="p">[</span><span class="mi">14</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">116</span><span class="p">])</span> <span class="c1">#15-Tubular Bells, 14-xylophone, 117-Taiko drum</span>
+            
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;strings wind breeze orchestra elegant elegance somber precision ritz class impressive&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="p">[</span><span class="mi">40</span><span class="p">,</span> <span class="mi">42</span><span class="p">,</span> <span class="mi">46</span><span class="p">])</span> <span class="c1">#40-Violin, 43-Cello, 47-Harp</span>
+            
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;moon mystical nighttime dusk evening stars stargazing space planets sense traveler alien atmosheric&quot;</span>\
+                    <span class="s2">&quot;strata radiation phenomenon shone sparkle shining distant&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="p">[</span><span class="mi">85</span><span class="p">,</span> <span class="mi">88</span><span class="p">,</span> <span class="mi">13</span><span class="p">])</span> <span class="c1">#86-Voice, , 89-New Age, 14-Xylophone</span>
+            
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;rusty broken cracked failing abused large fallen abandon dismayed&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">180</span><span class="p">,</span> <span class="p">[</span><span class="mi">22</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">58</span><span class="p">])</span> <span class="c1">#23-Harmonica, 71-Bassoon, 59-Tuba</span>
+        
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;adventure encounter showdown lingering nearby thousand circles battle lurking sinister&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="p">[</span><span class="mi">44</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">119</span><span class="p">])</span> <span class="c1">#45-Tremolo Strings, 19-Rock Organ, 120-Reverse Cymbal</span>
+        
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;aqueduct river stream flowing filled filling splashing swimming liquid dripping water flooded &quot;</span>\
+                    <span class="s2">&quot;spilling drenched soaking soaked moistened slick puddles puddling drenching weather rain wind cloud &quot;</span>\
+                    <span class="s2">&quot;drizzle mist &quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="p">[</span><span class="mi">40</span><span class="p">,</span> <span class="mi">96</span><span class="p">,</span> <span class="mi">123</span><span class="p">])</span> <span class="c1">#41-Violin, 97-Rain, 123-Seashore</span>
+         
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;cheerful happy pleasant jolly happiness joyful carefree&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="p">[</span><span class="mi">79</span><span class="p">,</span> <span class="mi">75</span><span class="p">,</span> <span class="mi">76</span><span class="p">])</span> <span class="c1">#80-Ocarina, 76-Pan flute, 77-Blown bottle</span>
+            
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;alien terrifying terror frightening ghastly abomination creature predator beastly foul scared&quot;</span>\
+                    <span class="s2">&quot;foreign infernal snuff&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">600</span><span class="p">,</span> <span class="p">[</span><span class="mi">101</span><span class="p">,</span> <span class="mi">103</span><span class="p">,</span> <span class="mi">127</span><span class="p">])</span> <span class="c1">#102-Goblins, 104-Scifi, 128-Gunshots</span>
+        
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;mountains rocks entombed cliffside canyons boulders plateau deserted cactus underneath&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">240</span><span class="p">,</span> <span class="p">[</span><span class="mi">71</span><span class="p">,</span> <span class="mi">81</span><span class="p">,</span> <span class="mi">114</span><span class="p">])</span><span class="c1">#72 - Clarinet, 82-Sawtooth, 115-Steel Drums</span>
+            
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;fatigue tired weary exhausted depleted expired extinct&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="p">[</span><span class="mi">58</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">113</span><span class="p">])</span><span class="c1">#59 Brass-Tuba, 81-Square, 114-Agogo</span>
+        
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="s2">&quot;random lunatics crazy gibberish crazed bizarre bewildering nonsense unknowable&quot;</span><span class="p">:</span>
+            <span class="n">random_tempo</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span><span class="mi">250</span><span class="p">)</span> 
+            <span class="n">random_instr1</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">114</span><span class="p">)</span> <span class="c1">#Random lead instrument</span>
+            <span class="n">random_instr2</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">127</span><span class="p">)</span> <span class="c1">#Random anything</span>
+            <span class="n">random_instr3</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">113</span><span class="p">,</span> <span class="mi">121</span><span class="p">)</span> <span class="c1">#Random percussion</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">random_tempo</span><span class="p">,</span> <span class="p">[</span><span class="n">random_instr1</span><span class="p">,</span> <span class="n">random_instr2</span><span class="p">,</span> <span class="n">random_instr3</span><span class="p">])</span></div>
+
+    <span class="nd">@staticmethod</span>  
+<div class="viewcode-block" id="MusicHelper.determine_instrument"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper.determine_instrument">[docs]</a>    <span class="k">def</span> <span class="nf">determine_instrument</span><span class="p">(</span><span class="n">midi_int</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Static method that identifies a category and instrument for a given int representing a MIDI instrument.</span>
+<span class="sd">        </span>
+<span class="sd">        :param int midi_int: The int of the MIDI instrument</span>
+<span class="sd">        :returns: A tuple containing the category and instrument name for the given int.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Add one because our MIDI writer uses 0-based index</span>
+        <span class="n">midi_int</span> <span class="o">=</span> <span class="n">midi_int</span> <span class="o">+</span> <span class="mi">1</span>
+        
+        <span class="c1">#Set the default</span>
+        <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;None&#39;</span>
+        <span class="n">instrument</span> <span class="o">=</span> <span class="s1">&#39;None&#39;</span>
+        
+        <span class="k">if</span>  <span class="n">midi_int</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">midi_int</span> <span class="o">&gt;</span> <span class="mi">128</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">type_instrument</span>
+        
+        <span class="k">if</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">8</span><span class="p">:</span> 
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Piano&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="mi">1</span> <span class="p">:</span> <span class="s1">&#39;Acoustic Grand Piano&#39;</span><span class="p">,</span>
+                <span class="mi">2</span> <span class="p">:</span> <span class="s1">&#39;Bright Acoustic Piano&#39;</span><span class="p">,</span>
+                <span class="mi">3</span> <span class="p">:</span> <span class="s1">&#39;Electric Grand Piano&#39;</span><span class="p">,</span>
+                <span class="mi">4</span> <span class="p">:</span> <span class="s1">&#39;Honky-tonk Piano&#39;</span><span class="p">,</span>
+                <span class="mi">5</span> <span class="p">:</span> <span class="s1">&#39;Electric Piano 1&#39;</span><span class="p">,</span>
+                <span class="mi">6</span> <span class="p">:</span> <span class="s1">&#39;Electric Piano 2&#39;</span><span class="p">,</span>
+                <span class="mi">7</span> <span class="p">:</span> <span class="s1">&#39;Harpsichord&#39;</span><span class="p">,</span>
+                <span class="mi">8</span> <span class="p">:</span> <span class="s1">&#39;Clavinet&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">16</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Chromatic Percussion&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="mi">9</span>  <span class="p">:</span> <span class="s1">&#39;Celesta&#39;</span><span class="p">,</span>
+                <span class="mi">10</span> <span class="p">:</span> <span class="s1">&#39;Glockenspiel&#39;</span><span class="p">,</span>
+                <span class="mi">11</span> <span class="p">:</span> <span class="s1">&#39;Music Box&#39;</span><span class="p">,</span>
+                <span class="mi">12</span> <span class="p">:</span> <span class="s1">&#39;Vibraphone&#39;</span><span class="p">,</span>
+                <span class="mi">13</span> <span class="p">:</span> <span class="s1">&#39;Marimba&#39;</span><span class="p">,</span>
+                <span class="mi">14</span> <span class="p">:</span> <span class="s1">&#39;Xylophone&#39;</span><span class="p">,</span>
+                <span class="mi">15</span> <span class="p">:</span> <span class="s1">&#39;Tubular Bells&#39;</span><span class="p">,</span>
+                <span class="mi">16</span> <span class="p">:</span> <span class="s1">&#39;Dulcimer&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">24</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Organ&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="mi">17</span> <span class="p">:</span> <span class="s1">&#39;Drawbar Organ&#39;</span><span class="p">,</span>
+                <span class="mi">18</span> <span class="p">:</span> <span class="s1">&#39;Percussive Organ&#39;</span><span class="p">,</span>
+                <span class="mi">19</span> <span class="p">:</span> <span class="s1">&#39;Rock Organ&#39;</span><span class="p">,</span>
+                <span class="mi">20</span> <span class="p">:</span> <span class="s1">&#39;Church Organ&#39;</span><span class="p">,</span>
+                <span class="mi">21</span> <span class="p">:</span> <span class="s1">&#39;Reed Organ&#39;</span><span class="p">,</span>
+                <span class="mi">22</span> <span class="p">:</span> <span class="s1">&#39;Accordion&#39;</span><span class="p">,</span>
+                <span class="mi">23</span> <span class="p">:</span> <span class="s1">&#39;Harmonica&#39;</span><span class="p">,</span>
+                <span class="mi">24</span> <span class="p">:</span> <span class="s1">&#39;Tango Accordion&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">32</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Guitar&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="mi">25</span> <span class="p">:</span> <span class="s1">&#39;Acoustic Guitar (nylon)&#39;</span><span class="p">,</span>
+                <span class="mi">26</span> <span class="p">:</span> <span class="s1">&#39;Acoustic Guitar (steel)&#39;</span><span class="p">,</span>
+                <span class="mi">27</span> <span class="p">:</span> <span class="s1">&#39;Electric Guitar (jazz)&#39;</span><span class="p">,</span>
+                <span class="mi">28</span> <span class="p">:</span> <span class="s1">&#39;Electric Guitar (clean)&#39;</span><span class="p">,</span>
+                <span class="mi">29</span> <span class="p">:</span> <span class="s1">&#39;Electric Guitar (muted)&#39;</span><span class="p">,</span>
+                <span class="mi">30</span> <span class="p">:</span> <span class="s1">&#39;Overdriven Guitar&#39;</span><span class="p">,</span>
+                <span class="mi">31</span> <span class="p">:</span> <span class="s1">&#39;Distortion Guitar&#39;</span><span class="p">,</span>
+                <span class="mi">32</span> <span class="p">:</span> <span class="s1">&#39;Guitar harmonics&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">40</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Bass&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="mi">33</span> <span class="p">:</span> <span class="s1">&#39;Acoustic Bass&#39;</span><span class="p">,</span>
+                <span class="mi">34</span> <span class="p">:</span> <span class="s1">&#39;Electric Bass (finger)&#39;</span><span class="p">,</span>
+                <span class="mi">35</span> <span class="p">:</span> <span class="s1">&#39;Electric Bass (pick)&#39;</span><span class="p">,</span>
+                <span class="mi">36</span> <span class="p">:</span> <span class="s1">&#39;Fretless Bass&#39;</span><span class="p">,</span>
+                <span class="mi">37</span> <span class="p">:</span> <span class="s1">&#39;Slap Bass 1&#39;</span><span class="p">,</span>
+                <span class="mi">38</span> <span class="p">:</span> <span class="s1">&#39;Slap Bass 2&#39;</span><span class="p">,</span>
+                <span class="mi">39</span> <span class="p">:</span> <span class="s1">&#39;Synth Bass 1&#39;</span><span class="p">,</span>
+                <span class="mi">40</span> <span class="p">:</span> <span class="s1">&#39;Synth Bass 2&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+            
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">52</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Strings&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span>        
+                <span class="mi">41</span> <span class="p">:</span> <span class="s1">&#39;Violin&#39;</span><span class="p">,</span>
+                <span class="mi">42</span> <span class="p">:</span> <span class="s1">&#39;Viola&#39;</span><span class="p">,</span>
+                <span class="mi">43</span> <span class="p">:</span> <span class="s1">&#39;Cello&#39;</span><span class="p">,</span>
+                <span class="mi">44</span> <span class="p">:</span> <span class="s1">&#39;Contrabass&#39;</span><span class="p">,</span>
+                <span class="mi">45</span> <span class="p">:</span> <span class="s1">&#39;Tremolo Strings&#39;</span><span class="p">,</span>
+                <span class="mi">46</span> <span class="p">:</span> <span class="s1">&#39;Pizzicato Strings&#39;</span><span class="p">,</span>
+                <span class="mi">47</span> <span class="p">:</span> <span class="s1">&#39;Orchestral Harp&#39;</span><span class="p">,</span>
+                <span class="mi">48</span> <span class="p">:</span> <span class="s1">&#39;Timpani&#39;</span><span class="p">,</span>
+                <span class="mi">49</span> <span class="p">:</span> <span class="s1">&#39;String Ensemble 1&#39;</span><span class="p">,</span>
+                <span class="mi">50</span> <span class="p">:</span> <span class="s1">&#39;String Ensemble 2&#39;</span><span class="p">,</span>
+                <span class="mi">51</span> <span class="p">:</span> <span class="s1">&#39;Synth Strings 1&#39;</span><span class="p">,</span>
+                <span class="mi">52</span> <span class="p">:</span> <span class="s1">&#39;Synth Strings 2&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+        
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">56</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Voice&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span>   
+                <span class="mi">53</span> <span class="p">:</span> <span class="s1">&#39;Choir Aahs&#39;</span><span class="p">,</span>
+                <span class="mi">54</span> <span class="p">:</span> <span class="s1">&#39;Voice Oohs&#39;</span><span class="p">,</span>
+                <span class="mi">55</span> <span class="p">:</span> <span class="s1">&#39;Synth Voice&#39;</span><span class="p">,</span>
+                <span class="mi">56</span> <span class="p">:</span> <span class="s1">&#39;Orchestra Hit&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">64</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Brass&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span>  
+                <span class="mi">57</span> <span class="p">:</span> <span class="s1">&#39;Trumpet&#39;</span><span class="p">,</span>
+                <span class="mi">58</span> <span class="p">:</span> <span class="s1">&#39;Trombone&#39;</span><span class="p">,</span>
+                <span class="mi">59</span> <span class="p">:</span> <span class="s1">&#39;Tuba&#39;</span><span class="p">,</span>
+                <span class="mi">60</span> <span class="p">:</span> <span class="s1">&#39;Muted Trumpet&#39;</span><span class="p">,</span>
+                <span class="mi">61</span> <span class="p">:</span> <span class="s1">&#39;French Horn&#39;</span><span class="p">,</span>
+                <span class="mi">62</span> <span class="p">:</span> <span class="s1">&#39;Brass Section&#39;</span><span class="p">,</span>
+                <span class="mi">63</span> <span class="p">:</span> <span class="s1">&#39;Synth Brass 1&#39;</span><span class="p">,</span>
+                <span class="mi">64</span> <span class="p">:</span> <span class="s1">&#39;Synth Brass 2&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+
+
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">72</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Reed&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span>  
+                <span class="mi">65</span> <span class="p">:</span> <span class="s1">&#39;Soprano Sax&#39;</span><span class="p">,</span>
+                <span class="mi">66</span> <span class="p">:</span> <span class="s1">&#39;Alto Sax&#39;</span><span class="p">,</span>
+                <span class="mi">67</span> <span class="p">:</span> <span class="s1">&#39;Tenor Sax&#39;</span><span class="p">,</span>
+                <span class="mi">68</span> <span class="p">:</span> <span class="s1">&#39;Baritone Sax&#39;</span><span class="p">,</span>
+                <span class="mi">69</span> <span class="p">:</span> <span class="s1">&#39;Oboe&#39;</span><span class="p">,</span>
+                <span class="mi">70</span> <span class="p">:</span> <span class="s1">&#39;English Horn&#39;</span><span class="p">,</span>
+                <span class="mi">71</span> <span class="p">:</span> <span class="s1">&#39;Bassoon&#39;</span><span class="p">,</span>
+                <span class="mi">72</span> <span class="p">:</span> <span class="s1">&#39;Clarinet&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">80</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Pipe&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span>  
+                <span class="mi">73</span> <span class="p">:</span> <span class="s1">&#39;Piccolo&#39;</span><span class="p">,</span>
+                <span class="mi">74</span> <span class="p">:</span> <span class="s1">&#39;Flute&#39;</span><span class="p">,</span>
+                <span class="mi">75</span> <span class="p">:</span> <span class="s1">&#39;Recorder&#39;</span><span class="p">,</span>
+                <span class="mi">76</span> <span class="p">:</span> <span class="s1">&#39;Pan Flute&#39;</span><span class="p">,</span>
+                <span class="mi">77</span> <span class="p">:</span> <span class="s1">&#39;Blown Bottle&#39;</span><span class="p">,</span>
+                <span class="mi">78</span> <span class="p">:</span> <span class="s1">&#39;Shakuhachi&#39;</span><span class="p">,</span>
+                <span class="mi">79</span> <span class="p">:</span> <span class="s1">&#39;Whistle&#39;</span><span class="p">,</span>
+                <span class="mi">80</span> <span class="p">:</span> <span class="s1">&#39;Ocarina&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">88</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Synth Lead&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span> 
+                <span class="mi">81</span> <span class="p">:</span> <span class="s1">&#39;Square&#39;</span><span class="p">,</span>
+                <span class="mi">82</span> <span class="p">:</span> <span class="s1">&#39;Sawtooth&#39;</span><span class="p">,</span>
+                <span class="mi">83</span> <span class="p">:</span> <span class="s1">&#39;Calliope&#39;</span><span class="p">,</span>
+                <span class="mi">84</span> <span class="p">:</span> <span class="s1">&#39;Chiff&#39;</span><span class="p">,</span>
+                <span class="mi">85</span> <span class="p">:</span> <span class="s1">&#39;Charang&#39;</span><span class="p">,</span>
+                <span class="mi">86</span> <span class="p">:</span> <span class="s1">&#39;Voice&#39;</span><span class="p">,</span>
+                <span class="mi">87</span> <span class="p">:</span> <span class="s1">&#39;Fifths&#39;</span><span class="p">,</span>
+                <span class="mi">88</span> <span class="p">:</span> <span class="s1">&#39;(Bass + Lead)&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">96</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Synth Pad&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span> 
+                <span class="mi">89</span> <span class="p">:</span> <span class="s1">&#39;New age&#39;</span><span class="p">,</span>
+                <span class="mi">90</span> <span class="p">:</span> <span class="s1">&#39;Warm&#39;</span><span class="p">,</span>
+                <span class="mi">91</span> <span class="p">:</span> <span class="s1">&#39;Polysynth&#39;</span><span class="p">,</span>
+                <span class="mi">92</span> <span class="p">:</span> <span class="s1">&#39;Choir&#39;</span><span class="p">,</span>
+                <span class="mi">93</span> <span class="p">:</span> <span class="s1">&#39;Bowed&#39;</span><span class="p">,</span>
+                <span class="mi">94</span> <span class="p">:</span> <span class="s1">&#39;Metallic&#39;</span><span class="p">,</span>
+                <span class="mi">95</span> <span class="p">:</span> <span class="s1">&#39;Halo&#39;</span><span class="p">,</span>
+                <span class="mi">96</span> <span class="p">:</span> <span class="s1">&#39;Sweep&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">104</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Synth Effects&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span> 
+                <span class="mi">97</span> <span class="p">:</span> <span class="s1">&#39;Rain&#39;</span><span class="p">,</span>
+                <span class="mi">98</span> <span class="p">:</span> <span class="s1">&#39;Soundtrack&#39;</span><span class="p">,</span>
+                <span class="mi">99</span> <span class="p">:</span> <span class="s1">&#39;Crystal&#39;</span><span class="p">,</span>
+                <span class="mi">100</span> <span class="p">:</span> <span class="s1">&#39;Atmosphere&#39;</span><span class="p">,</span>
+                <span class="mi">101</span> <span class="p">:</span> <span class="s1">&#39;Brightness&#39;</span><span class="p">,</span>
+                <span class="mi">102</span> <span class="p">:</span> <span class="s1">&#39;Goblins&#39;</span><span class="p">,</span>
+                <span class="mi">103</span> <span class="p">:</span> <span class="s1">&#39;Echoes&#39;</span><span class="p">,</span>
+                <span class="mi">104</span> <span class="p">:</span> <span class="s1">&#39;Sci-fi&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">112</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Ethnic&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span> 
+                <span class="mi">105</span> <span class="p">:</span> <span class="s1">&#39;Sitar&#39;</span><span class="p">,</span>
+                <span class="mi">106</span> <span class="p">:</span> <span class="s1">&#39;Banjo&#39;</span><span class="p">,</span>
+                <span class="mi">107</span> <span class="p">:</span> <span class="s1">&#39;Shamisen&#39;</span><span class="p">,</span>
+                <span class="mi">108</span> <span class="p">:</span> <span class="s1">&#39;Koto&#39;</span><span class="p">,</span>
+                <span class="mi">109</span> <span class="p">:</span> <span class="s1">&#39;Kalimba&#39;</span><span class="p">,</span>
+                <span class="mi">110</span> <span class="p">:</span> <span class="s1">&#39;Bag pipe&#39;</span><span class="p">,</span>
+                <span class="mi">111</span> <span class="p">:</span> <span class="s1">&#39;Fiddle&#39;</span><span class="p">,</span>
+                <span class="mi">112</span> <span class="p">:</span> <span class="s1">&#39;Shanai&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+        
+        <span class="k">elif</span> <span class="n">midi_int</span> <span class="o">&lt;=</span> <span class="mi">119</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Percussive&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span> 
+                <span class="mi">113</span> <span class="p">:</span> <span class="s1">&#39;Tinkle Bell&#39;</span><span class="p">,</span>
+                <span class="mi">114</span> <span class="p">:</span> <span class="s1">&#39;Agogo&#39;</span><span class="p">,</span>
+                <span class="mi">115</span> <span class="p">:</span> <span class="s1">&#39;Steel Drums&#39;</span><span class="p">,</span>
+                <span class="mi">116</span> <span class="p">:</span> <span class="s1">&#39;Woodblock&#39;</span><span class="p">,</span>
+                <span class="mi">117</span> <span class="p">:</span> <span class="s1">&#39;Taiko Drum&#39;</span><span class="p">,</span>
+                <span class="mi">118</span> <span class="p">:</span> <span class="s1">&#39;Melodic Tom&#39;</span><span class="p">,</span>
+                <span class="mi">119</span> <span class="p">:</span> <span class="s1">&#39;Synth Drum&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="s1">&#39;Sound Effect&#39;</span>
+            <span class="n">instrument</span> <span class="o">=</span> <span class="p">{</span> 
+                <span class="mi">120</span> <span class="p">:</span> <span class="s1">&#39;Reverse Cymbal&#39;</span><span class="p">,</span>
+                <span class="mi">121</span> <span class="p">:</span> <span class="s1">&#39;Guitar Fret Noise&#39;</span><span class="p">,</span>
+                <span class="mi">122</span> <span class="p">:</span> <span class="s1">&#39;Breath Noise&#39;</span><span class="p">,</span>
+                <span class="mi">123</span> <span class="p">:</span> <span class="s1">&#39;Seashore&#39;</span><span class="p">,</span>
+                <span class="mi">124</span> <span class="p">:</span> <span class="s1">&#39;Bird Tweet&#39;</span><span class="p">,</span>
+                <span class="mi">125</span> <span class="p">:</span> <span class="s1">&#39;Telephone Ring&#39;</span><span class="p">,</span>
+                <span class="mi">126</span> <span class="p">:</span> <span class="s1">&#39;Helicopter&#39;</span><span class="p">,</span>
+                <span class="mi">127</span> <span class="p">:</span> <span class="s1">&#39;Applause&#39;</span><span class="p">,</span>
+                <span class="mi">128</span> <span class="p">:</span> <span class="s1">&#39;Gunshot&#39;</span>
+            <span class="p">}[</span><span class="n">midi_int</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="n">instrument</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Sus Roy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

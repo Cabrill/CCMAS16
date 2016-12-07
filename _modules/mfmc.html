@@ -1,0 +1,265 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfmc &#8212; MFMC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for mfmc</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">.. py:module:: mfmc</span>
+<span class="sd">    :platform: Unix</span>
+
+<span class="sd">MFMC(Music From Multiple Content) project to create music(lyrics+tracks) using multiple agents in a `creamas &lt;https://github.com/assamite/creamas/&gt;`_ environment and using the `pyknon &lt;http://kroger.github.io/pyknon/&gt;`_ library</span>
+<span class="sd">to create MIDI files.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">logging</span><span class="o">,</span><span class="nn">random</span><span class="o">,</span><span class="nn">numpy</span><span class="o">,</span><span class="nn">re</span><span class="o">,</span><span class="nn">string</span><span class="o">,</span><span class="nn">aiomas</span><span class="o">,</span><span class="nn">nltk</span><span class="o">,</span><span class="nn">os</span><span class="o">,</span><span class="nn">subprocess</span><span class="o">,</span> <span class="nn">platform</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">listdir</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">isfile</span><span class="p">,</span> <span class="n">join</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">Counter</span>
+<span class="kn">from</span> <span class="nn">mc</span> <span class="k">import</span> <span class="n">markov_chain</span><span class="p">,</span> <span class="n">generate</span><span class="p">,</span> <span class="n">sanitize</span><span class="p">,</span> <span class="n">determineOrder</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">,</span> <span class="n">format_for_printing</span>
+<span class="kn">from</span> <span class="nn">list_mem</span> <span class="k">import</span> <span class="n">ListMemory</span>
+<span class="kn">from</span> <span class="nn">creamas.core</span> <span class="k">import</span> <span class="n">CreativeAgent</span><span class="p">,</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">Simulation</span><span class="p">,</span> <span class="n">Artifact</span>
+<span class="kn">from</span> <span class="nn">serializers</span> <span class="k">import</span> <span class="n">get_artifact_ser</span>
+<span class="kn">from</span> <span class="nn">music_util</span> <span class="k">import</span> <span class="n">MusicHelper</span>
+<span class="kn">from</span> <span class="nn">pyknon.genmidi</span> <span class="k">import</span> <span class="n">Midi</span>
+<span class="kn">from</span> <span class="nn">pyknon.music</span> <span class="k">import</span> <span class="n">NoteSeq</span>
+<span class="kn">from</span> <span class="nn">music_agent</span> <span class="k">import</span> <span class="n">MusicAgent</span>
+
+<span class="c1"># Logging setup. This is simplified setup as all agents use the same logger.</span>
+<span class="c1"># It _will_ cause some problems in asynchronous settings, especially if you</span>
+<span class="c1"># are logging to a file.</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">())</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="ServiceAgent"><a class="viewcode-back" href="../mfmc.html#mfmc.ServiceAgent">[docs]</a><span class="k">class</span> <span class="nc">ServiceAgent</span><span class="p">(</span><span class="n">CreativeAgent</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Agent which defines a service for other agents to use.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+
+    <span class="nd">@aiomas</span><span class="o">.</span><span class="n">expose</span>    
+<div class="viewcode-block" id="ServiceAgent.request_random_agent"><a class="viewcode-back" href="../mfmc.html#mfmc.ServiceAgent.request_random_agent">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">request_random_agent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Allows an agent to get access to a random agent to request an artifact exchange</span>
+<span class="sd">        Note:  At this time, an agent can be given itself. </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">all_agents</span> <span class="o">=</span> <span class="p">[</span><span class="n">agent</span> <span class="k">for</span> <span class="n">agent</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">get_agents</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">ServiceAgent</span><span class="p">)]</span>
+        <span class="n">random_agent</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">all_agents</span><span class="p">)</span>
+            
+        <span class="k">return</span> <span class="n">random_agent</span><span class="o">.</span><span class="n">addr</span></div>
+        
+<div class="viewcode-block" id="ServiceAgent.act"><a class="viewcode-back" href="../mfmc.html#mfmc.ServiceAgent.act">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">act</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span></div></div>
+        
+<div class="viewcode-block" id="MusicEnvironment"><a class="viewcode-back" href="../mfmc.html#mfmc.MusicEnvironment">[docs]</a><span class="k">class</span> <span class="nc">MusicEnvironment</span><span class="p">(</span><span class="n">Environment</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MusicEnvironment.vote"><a class="viewcode-back" href="../mfmc.html#mfmc.MusicEnvironment.vote">[docs]</a>    <span class="k">def</span> <span class="nf">vote</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">age</span><span class="p">):</span>
+        <span class="n">artifacts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">perform_voting</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">artifacts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">accepted</span> <span class="o">=</span> <span class="n">artifacts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">accepted_value</span> <span class="o">=</span> <span class="n">artifacts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_artifact</span><span class="p">(</span><span class="n">accepted</span><span class="p">)</span> <span class="c1"># Add vote winner to domain</span>
+            <span class="n">lyrics</span> <span class="o">=</span> <span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">theme</span> <span class="o">=</span> <span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Winning song created by: </span><span class="si">{}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">Lyrics:</span><span class="si">{}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">Theme based on: </span><span class="si">{}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">(val=</span><span class="si">{}</span><span class="s2">)&quot;</span>
+                        <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">,</span> <span class="n">theme</span><span class="p">,</span> <span class="n">accepted_value</span><span class="p">))</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tempo: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tracks: &quot;</span><span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">3</span><span class="p">])))</span>
+            <span class="n">instr1</span> <span class="o">=</span> <span class="n">MusicHelper</span><span class="o">.</span><span class="n">determine_instrument</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">instr2</span> <span class="o">=</span> <span class="n">MusicHelper</span><span class="o">.</span><span class="n">determine_instrument</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">instr3</span> <span class="o">=</span> <span class="n">MusicHelper</span><span class="o">.</span><span class="n">determine_instrument</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span>
+            
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Instrument 1: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">instr1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">instr1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Instrument 2: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">instr2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">instr2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Instrument 3: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">instr3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">instr3</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No vote winner!&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_candidates</span><span class="p">()</span>
+        <span class="n">file_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_midi</span><span class="p">(</span><span class="n">accepted</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">play_midi</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+        <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Playing artifact&#39;s music.  Press a key for next voting round...&quot;</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="MusicEnvironment.save_midi"><a class="viewcode-back" href="../mfmc.html#mfmc.MusicEnvironment.save_midi">[docs]</a>    <span class="k">def</span> <span class="nf">save_midi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="n">track_list</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">music_theme</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">word_theme</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        
+        <span class="n">midi</span> <span class="o">=</span> <span class="n">Midi</span><span class="p">(</span><span class="n">number_tracks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">track_list</span><span class="p">),</span> <span class="n">tempo</span><span class="o">=</span><span class="n">music_theme</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">instrument</span><span class="o">=</span><span class="n">music_theme</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">track_list</span><span class="p">)):</span>
+            <span class="n">midi</span><span class="o">.</span><span class="n">seq_notes</span><span class="p">(</span><span class="n">track_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">track</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+        
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">word_theme</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">age</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.mid&quot;</span>
+        <span class="n">midi</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">file_name</span></div>
+        
+<div class="viewcode-block" id="MusicEnvironment.play_midi"><a class="viewcode-back" href="../mfmc.html#mfmc.MusicEnvironment.play_midi">[docs]</a>    <span class="k">def</span> <span class="nf">play_midi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;darwin&#39;</span><span class="p">):</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">((</span><span class="s1">&#39;open&#39;</span><span class="p">,</span> <span class="n">filepath</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;nt&#39;</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">startfile</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;posix&#39;</span><span class="p">:</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">((</span><span class="s1">&#39;xdg-open&#39;</span><span class="p">,</span> <span class="n">filepath</span><span class="p">))</span></div></div>
+        
+<div class="viewcode-block" id="getTextFromFile"><a class="viewcode-back" href="../mfmc.html#mfmc.getTextFromFile">[docs]</a><span class="k">def</span> <span class="nf">getTextFromFile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Opens the specified file at filename and returns the raw text</span>
+<span class="sd">    </span>
+<span class="sd">    :param str filename: The name of the file to read</span>
+<span class="sd">    :returns:</span>
+<span class="sd">        a string containing the raw text</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">raw_text</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+    <span class="c1"># And replace more than one subsequent whitespace chars with one space</span>
+    <span class="n">raw_text</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">r&#39;\s+&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">raw_text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">raw_text</span><span class="p">;</span></div>
+    
+<div class="viewcode-block" id="read_text"><a class="viewcode-back" href="../mfmc.html#mfmc.read_text">[docs]</a><span class="k">def</span> <span class="nf">read_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mypath</span><span class="o">=</span><span class="s2">&quot;InspiringSet/&quot;</span><span class="p">):</span>
+    <span class="n">text_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span>  <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">mypath</span><span class="p">)</span> <span class="k">if</span> <span class="n">isfile</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">mypath</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.txt&quot;</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">text_files</span></div>
+    
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing environment and agent data...&quot;</span><span class="p">)</span>
+    
+    <span class="c1">#Set Inspiring Set path (location of TXT files)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;InspiringSet/&quot;</span>
+    
+    <span class="c1">#Set the memory length and voting rounds</span>
+    <span class="n">list_memory</span> <span class="o">=</span> <span class="mi">25</span>
+    <span class="n">voting_rounds</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="n">num_agents</span> <span class="o">=</span> <span class="mi">5</span>
+    
+    <span class="c1">#Create the simulation environment</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">MusicEnvironment</span><span class="o">.</span><span class="n">create</span><span class="p">((</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">5555</span><span class="p">),</span> <span class="n">codec</span><span class="o">=</span><span class="n">aiomas</span><span class="o">.</span><span class="n">MsgPack</span><span class="p">,</span> <span class="n">extra_serializers</span><span class="o">=</span><span class="p">[</span><span class="n">get_artifact_ser</span><span class="p">])</span>
+    
+    <span class="c1">#Create a service agent</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">ServiceAgent</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+    
+    <span class="c1">#Create a music helper for determining scales</span>
+    <span class="n">helper</span> <span class="o">=</span> <span class="n">MusicHelper</span><span class="p">()</span>
+    
+    <span class="c1">#Check for available text</span>
+    <span class="n">text_file_list</span> <span class="o">=</span> <span class="n">read_text</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">num_text</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">text_file_list</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">num_text</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No text was found in the &#39;&quot;</span> <span class="o">+</span> <span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;&#39; location.&quot;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">num_agents</span> <span class="o">&lt;</span> <span class="n">num_text</span><span class="p">:</span>
+        <span class="n">agents_per_text</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">agents_per_text</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_agents</span> <span class="o">/</span> <span class="n">num_text</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">text_file</span> <span class="ow">in</span> <span class="n">text_file_list</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">get_agents</span><span class="p">())</span> <span class="o">&lt;</span> <span class="n">num_agents</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reading &#39;&quot;</span><span class="o">+</span><span class="n">text_file</span><span class="o">+</span><span class="s2">&quot;&#39;...&quot;</span><span class="p">)</span>
+            <span class="n">fqpn</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="n">text_file</span>
+            <span class="c1">#Read the text data</span>
+            <span class="n">text_read</span> <span class="o">=</span> <span class="n">getTextFromFile</span><span class="p">(</span><span class="n">fqpn</span><span class="p">)</span>
+            <span class="c1">#Learn the Markov Chains from the text</span>
+            <span class="n">textmc</span><span class="p">,</span> <span class="n">textst</span> <span class="o">=</span> <span class="n">markov_chain</span><span class="p">(</span><span class="n">text_read</span><span class="p">)</span>
+            
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">agents_per_text</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">get_agents</span><span class="p">())</span> <span class="o">&lt;</span> <span class="n">num_agents</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating an agent for &quot;</span> <span class="o">+</span> <span class="n">text_file</span><span class="p">)</span>
+                    <span class="n">MusicAgent</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">textmc</span><span class="p">,</span> <span class="n">textst</span><span class="p">,</span> <span class="n">helper</span><span class="p">,</span> <span class="n">list_memory</span><span class="p">,</span> <span class="n">server</span><span class="o">.</span><span class="n">addr</span><span class="p">)</span>
+    
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">get_agents</span><span class="p">())</span> <span class="o">&lt;</span> <span class="n">num_agents</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating leftover agents for &quot;</span> <span class="o">+</span> <span class="n">text_file</span><span class="p">)</span>
+        <span class="n">MusicAgent</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">textmc</span><span class="p">,</span> <span class="n">textst</span><span class="p">,</span> <span class="n">helper</span><span class="p">,</span> <span class="n">list_memory</span><span class="p">,</span> <span class="n">server</span><span class="o">.</span><span class="n">addr</span><span class="p">)</span>
+
+    <span class="c1">#Start the simulation</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulation</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">log_folder</span><span class="o">=</span><span class="s1">&#39;logs&#39;</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">vote</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initialization complete!  Starting simulation...&quot;</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">async_steps</span><span class="p">(</span><span class="n">voting_rounds</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+    <span class="n">csvFile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Sus Roy.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
