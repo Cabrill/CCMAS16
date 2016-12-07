@@ -297,6 +297,9 @@ class MusicHelper:
         
         if word in "mountains rocks entombed cliffside canyons boulders plateau deserted cactus underneath":
             return (240, [71, 81, 114])#72 - Clarinet, 82-Sawtooth, 115-Steel Drums
+            
+        if word in "fatigue tired weary exhausted depleted expired extinct":
+            return (140, [58, 80, 113])#59 Brass-Tuba, 81-Square, 114-Agogo
         
         if word in "random lunatics crazy gibberish crazed bizarre bewildering nonsense unknowable":
             random_tempo = random.randint(120,250) 
