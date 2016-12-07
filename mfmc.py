@@ -2,8 +2,8 @@
 .. py:module:: mfmc
     :platform: Unix
 
-Toy example of using `creamas <https://github.com/assamite/creamas/>`_ to build
-a multi-agent system.
+MFMC(Music From Multiple Content) project to create music(lyrics+tracks) using multiple agents in a `creamas <https://github.com/assamite/creamas/>`_ environment and using the `pyknon <http://kroger.github.io/pyknon/>`_ library
+to create MIDI files.
 '''
 import logging,random,numpy,re,string,aiomas,nltk,os,subprocess, platform
 from os import listdir
@@ -45,7 +45,7 @@ class ServiceAgent(CreativeAgent):
     async def act(self):
         return
         
-class ToyEnvironment(Environment):
+class MusicEnvironment(Environment):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     num_agents = 5
     
     #Create the simulation environment
-    env = ToyEnvironment.create(('localhost', 5555), codec=aiomas.MsgPack, extra_serializers=[get_artifact_ser])
+    env = MusicEnvironment.create(('localhost', 5555), codec=aiomas.MsgPack, extra_serializers=[get_artifact_ser])
     
     #Create a service agent
     server = ServiceAgent(env)

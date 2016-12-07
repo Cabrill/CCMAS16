@@ -229,7 +229,7 @@ class MusicHelper:
         This method takes a word supplied by the agent and attempts to match items
         as a substring of themes encompassed by word lists.  If a matching theme
         is found then a list of MIDI instrument numbers is returned.
-        *A substring will match (word=old, will_match=olden)
+        *A substring will match (word=old, will_match=olden)*
         
         :param str word: The word to use as a potential theme match
         :returns: A tuple containing tempo and a list of MIDI instruments in int format.
