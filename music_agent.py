@@ -1,8 +1,9 @@
-import aiomas, re, random, nltk
+import aiomas, re, random, nltk, operator
 from creamas.core import CreativeAgent, Environment, Simulation, Artifact
 from mc import markov_chain, generate, sanitize, determineOrder, likelihood, format_for_printing
 from list_mem import ListMemory
 from pyknon.music import NoteSeq, Rest
+from collections import defaultdict
 
 def levenshtein(s, t):
     '''Compute the edit distance between two strings.
@@ -187,6 +188,37 @@ class MusicAgent(CreativeAgent):
         
         return evaluation, framing
 
+    def eval_music(self,artifact):
+
+        def sanitize_track(artifact): #remove all not-note elements of the track_list in order to evaluate only the notes sequence
+            tr_list = artifact.obj[3]
+            line = str(tr_list)
+            line = re.sub('[<>:R.#, ]', '', line)
+            line = ''.join([i for i in line if not i.isdigit()])
+            line = line.replace("Seq", "")
+            line = line.replace("[", "")
+            line = line.replace("]", "")
+            return line
+
+        minPhrase = 12 #min notes that a phrase should have
+        notes = sanitize_track(artifact) #only the notes of track_list
+        occur = {} #dictionary to cotain all possible phrases and their number of occurrences
+        for i in range(len(notes) - minPhrase + 1):
+            select = notes[i:i + minPhrase] #selected phrase to look for
+            if select not in occur: #if the phrase is not in the dictionary, add it
+                occur[select] = 1 #inital value of occurrence
+
+            rest = notes[0:i] + notes[i + minPhrase:len(notes)] #rest of the notes without the selected phrase
+            if occur[select] <= 1: #if we haven't looked for the phrase, look for it, else continue to the next one
+                for j in range(len(rest) - minPhrase + 1):
+                    if rest[j:j + minPhrase] == select: #if selected phrase is found, increase its counter by one
+                        occur[select] += 1
+        sorted_occ = sorted(occur.items(), key=operator.itemgetter(1), reverse=True) #sort the occurrence dictionary in descending order
+        musiceval= sorted_occ[0] #returns the most repeated phrase and its number of repetitions. e.g. ('aba', 3).
+        # If the number of repetitions is <= 1 then there were no repeated phrases. Because the occurences dictionary is sorted
+        #as a list, we can return more elements if needed
+        return musiceval
+
     def generate(self):
         '''Generate new text.
 
@@ -285,7 +317,7 @@ class MusicAgent(CreativeAgent):
             for p in range(phrase_len-1, phrase_len-pattern_length-1, -1):
                 word = lyric_words[p]
                 pattern_list.append(len(word))
-
+            print(pattern_list)
             pattern_sum = sum(int(x) for x in pattern_list)
             num_pattern_in_song = num_notes / len(pattern_list)
             pattern_dur = lead_track_duration / num_pattern_in_song
