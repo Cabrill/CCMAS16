@@ -203,6 +203,58 @@ class MusicAgent(CreativeAgent):
 
     def eval_music(self,artifact):
 
+        #evaluate instruments
+
+        #according to midi standard sounds list(see http://soundprogramming.net/file-formats/general-midi-instrument-list/) we decided:
+        # Lead:
+        # 1: 8, 25: 31, 41: 43, 57, 65: 72, 73: 80, 105: 112
+        #
+        # Rythm:
+        # 17: 24, 25: 31, 33: 40, 41: 48, 49: 56, 57: 64,
+        #
+        # Percussion:
+        # 9: 16, 81: 88, 89: 96, 97: 104, 113: 120
+        #
+        # bad
+        # 32, 121: 128
+        inst_eval = 0
+        lead = list(range(8,25))+ list(range(25,31)) + list(range(41,43)) + list(range(65,80)) + list(range(105,112)) #appropriate lead sounds
+        lead.append(57)
+        rythm = list(range(17,24)) + list(range(25,31)) +list(range(33,64)) #appropriate rythm sounds
+        percussion = list(range(9,16)) + list(range(81,104)) + list(range(113,120)) #appropriate percussion sounds
+        bad = list(range(121,128)) #inappropriate sounds for a song
+        bad.append(32)
+        #first we return the midi id of the instruments
+        ins1 = artifact.obj[2][1][0] + 1
+        ins2 = artifact.obj[2][1][1] + 1
+        ins3 = artifact.obj[2][1][2] + 1
+        if ins1 in bad: #bad score for bad sounds
+            inst_eval -= 3
+        elif ins1 in lead: #best score for lead sounds
+            inst_eval += 2
+        elif ins1 in rythm: #good score for rythm sounds
+            inst_eval += 1
+        else: #bad score for percussions
+            inst_eval -= 2
+
+        if ins2 in bad: #bad score for bad sounds
+            inst_eval -= 3
+        elif ins2 in lead: #good score for lead sounds
+            inst_eval += 1
+        elif ins2 in rythm: #best score for rythm sounds
+            inst_eval += 2
+        else: #bad score for percussions
+            inst_eval -= 2
+
+        if ins3 in bad: #worst score for bad sounds
+            inst_eval -= 3
+        elif ins3 in percussion: #best score for percussions
+            inst_eval += 2
+        else: #bad score for rythm or lead sounds
+            inst_eval -= 2
+
+
+        #evaluate melody
         def sanitize_track(artifact): #remove all not-note elements of the track_list in order to evaluate only the notes sequence
             tr_list = artifact.obj[3]
             line = str(tr_list)
@@ -242,6 +294,9 @@ class MusicAgent(CreativeAgent):
                 eval_score = eval_score + phrase_score
         
         eval_score = min(1, eval_score) #Correct rounding error that would result in 1.01
+
+        #add instrument eval to eval_score
+        eval_score += inst_eval
         
         return eval_score
 
