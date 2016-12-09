@@ -1,6 +1,3 @@
-'''
-.. py:module:: Markov_chain
-'''
 import re
 import operator
 import nltk

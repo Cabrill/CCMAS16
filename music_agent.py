@@ -461,7 +461,7 @@ class MusicAgent(CreativeAgent):
     def reconsider_invention_methods(self, lyrics):
         '''
         Allows an agent to create new invention methods, or replace a poorly performing method.
-        :param lyrics: string to be used for generation of a new method
+        :param string lyrics: Lyrics to be used as inspiration for generation of a new method
         '''
         #First check if we've filled our maximum number of methods
         if len(self.invention_methods) < self.method_limit:
