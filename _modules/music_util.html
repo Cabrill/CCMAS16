@@ -50,7 +50,7 @@
 
 <div class="viewcode-block" id="MusicHelper"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper">[docs]</a><span class="k">class</span> <span class="nc">MusicHelper</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    A class that contains methods for creating music from text, analyzing the music, and modifying it.</span>
+<span class="sd">    A class that contains useful methods for creating music from text, analyzing the music, and modifying it.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="c1">#Hard-coded list of musical keys and their relative keys</span>
     <span class="n">relative_keys</span> <span class="o">=</span> <span class="p">{</span>
@@ -82,9 +82,9 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">music_keys</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">read_keys</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_read_keys</span><span class="p">()</span>
         
-<div class="viewcode-block" id="MusicHelper.read_keys"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper.read_keys">[docs]</a>    <span class="k">def</span> <span class="nf">read_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mypath</span><span class="o">=</span><span class="s2">&quot;keys/&quot;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_read_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mypath</span><span class="o">=</span><span class="s2">&quot;keys/&quot;</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Initialization method that reads in all available keys, in a specified path.</span>
 <span class="sd">        </span>
@@ -94,7 +94,7 @@
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">key_files</span><span class="p">:</span>
             <span class="n">new_key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
             <span class="n">key_notes</span> <span class="o">=</span> <span class="n">NoteSeq</span><span class="p">(</span><span class="s2">&quot;file://&quot;</span> <span class="o">+</span> <span class="n">mypath</span> <span class="o">+</span> <span class="n">key</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">music_keys</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">key_notes</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">music_keys</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">key_notes</span>
     
 <div class="viewcode-block" id="MusicHelper.determine_dominant_key"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper.determine_dominant_key">[docs]</a>    <span class="k">def</span> <span class="nf">determine_dominant_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">notes</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
@@ -129,7 +129,7 @@
     <span class="nd">@staticmethod</span>    
 <div class="viewcode-block" id="MusicHelper.convert_phrase_to_notes"><a class="viewcode-back" href="../music_util.html#music_util.MusicHelper.convert_phrase_to_notes">[docs]</a>    <span class="k">def</span> <span class="nf">convert_phrase_to_notes</span><span class="p">(</span><span class="n">phrase</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Takes a phrase and converts it to musical notes by extracting characters that represent</span>
+<span class="sd">        Takes a text phrase and converts it to musical notes by extracting characters that represent</span>
 <span class="sd">        musical notes.</span>
 <span class="sd">        </span>
 <span class="sd">        :param str phrase: Any string of text, to be converted to musical notes</span>
@@ -193,6 +193,12 @@
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Attempts to find patterns in lyrics to be paired with the given notes</span>
 <span class="sd">        to create new tracks of a specified duration</span>
+<span class="sd">        </span>
+<span class="sd">        :param str lyrics:The lyrics from which to derive music</span>
+<span class="sd">        :param NoteSequ notes: The notes to be utilized in track creation</span>
+<span class="sd">        :param int track_duration: The optimal length of the tracks, in seconds</span>
+<span class="sd">        :param list method:A list of invention methods that derive data from text</span>
+<span class="sd">        :returns: A list of NoteSeqs that represents musical tracks</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">num_notes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">notes</span><span class="p">)</span>
         <span class="n">lyrics_sentences</span> <span class="o">=</span> <span class="n">lyrics</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>

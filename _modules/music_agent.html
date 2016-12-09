@@ -247,6 +247,58 @@
 
 <div class="viewcode-block" id="MusicAgent.eval_music"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_music">[docs]</a>    <span class="k">def</span> <span class="nf">eval_music</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">artifact</span><span class="p">):</span>
 
+        <span class="c1">#evaluate instruments</span>
+
+        <span class="c1">#according to midi standard sounds list(see http://soundprogramming.net/file-formats/general-midi-instrument-list/) we decided:</span>
+        <span class="c1"># Lead:</span>
+        <span class="c1"># 1: 8, 25: 31, 41: 43, 57, 65: 72, 73: 80, 105: 112</span>
+        <span class="c1">#</span>
+        <span class="c1"># Rythm:</span>
+        <span class="c1"># 17: 24, 25: 31, 33: 40, 41: 48, 49: 56, 57: 64,</span>
+        <span class="c1">#</span>
+        <span class="c1"># Percussion:</span>
+        <span class="c1"># 9: 16, 81: 88, 89: 96, 97: 104, 113: 120</span>
+        <span class="c1">#</span>
+        <span class="c1"># bad</span>
+        <span class="c1"># 32, 121: 128</span>
+        <span class="n">inst_eval</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">lead</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">25</span><span class="p">))</span><span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span><span class="mi">31</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">41</span><span class="p">,</span><span class="mi">43</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span><span class="mi">80</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">105</span><span class="p">,</span><span class="mi">112</span><span class="p">))</span> <span class="c1">#appropriate lead sounds</span>
+        <span class="n">lead</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">57</span><span class="p">)</span>
+        <span class="n">rythm</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">17</span><span class="p">,</span><span class="mi">24</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span><span class="mi">31</span><span class="p">))</span> <span class="o">+</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">33</span><span class="p">,</span><span class="mi">64</span><span class="p">))</span> <span class="c1">#appropriate rythm sounds</span>
+        <span class="n">percussion</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="mi">16</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">81</span><span class="p">,</span><span class="mi">104</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">113</span><span class="p">,</span><span class="mi">120</span><span class="p">))</span> <span class="c1">#appropriate percussion sounds</span>
+        <span class="n">bad</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">121</span><span class="p">,</span><span class="mi">128</span><span class="p">))</span> <span class="c1">#inappropriate sounds for a song</span>
+        <span class="n">bad</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+        <span class="c1">#first we return the midi id of the instruments</span>
+        <span class="n">ins1</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">ins2</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">ins3</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">ins1</span> <span class="ow">in</span> <span class="n">bad</span><span class="p">:</span> <span class="c1">#bad score for bad sounds</span>
+            <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">3</span>
+        <span class="k">elif</span> <span class="n">ins1</span> <span class="ow">in</span> <span class="n">lead</span><span class="p">:</span> <span class="c1">#best score for lead sounds</span>
+            <span class="n">inst_eval</span> <span class="o">+=</span> <span class="mi">2</span>
+        <span class="k">elif</span> <span class="n">ins1</span> <span class="ow">in</span> <span class="n">rythm</span><span class="p">:</span> <span class="c1">#good score for rythm sounds</span>
+            <span class="n">inst_eval</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1">#bad score for percussions</span>
+            <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">2</span>
+
+        <span class="k">if</span> <span class="n">ins2</span> <span class="ow">in</span> <span class="n">bad</span><span class="p">:</span> <span class="c1">#bad score for bad sounds</span>
+            <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">3</span>
+        <span class="k">elif</span> <span class="n">ins2</span> <span class="ow">in</span> <span class="n">lead</span><span class="p">:</span> <span class="c1">#good score for lead sounds</span>
+            <span class="n">inst_eval</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">ins2</span> <span class="ow">in</span> <span class="n">rythm</span><span class="p">:</span> <span class="c1">#best score for rythm sounds</span>
+            <span class="n">inst_eval</span> <span class="o">+=</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1">#bad score for percussions</span>
+            <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">2</span>
+
+        <span class="k">if</span> <span class="n">ins3</span> <span class="ow">in</span> <span class="n">bad</span><span class="p">:</span> <span class="c1">#worst score for bad sounds</span>
+            <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">3</span>
+        <span class="k">elif</span> <span class="n">ins3</span> <span class="ow">in</span> <span class="n">percussion</span><span class="p">:</span> <span class="c1">#best score for percussions</span>
+            <span class="n">inst_eval</span> <span class="o">+=</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1">#bad score for rythm or lead sounds</span>
+            <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">2</span>
+
+
+        <span class="c1">#evaluate melody</span>
         <span class="k">def</span> <span class="nf">sanitize_track</span><span class="p">(</span><span class="n">artifact</span><span class="p">):</span> <span class="c1">#remove all not-note elements of the track_list in order to evaluate only the notes sequence</span>
             <span class="n">tr_list</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
             <span class="n">line</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">tr_list</span><span class="p">)</span>
@@ -286,6 +338,9 @@
                 <span class="n">eval_score</span> <span class="o">=</span> <span class="n">eval_score</span> <span class="o">+</span> <span class="n">phrase_score</span>
         
         <span class="n">eval_score</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">eval_score</span><span class="p">)</span> <span class="c1">#Correct rounding error that would result in 1.01</span>
+
+        <span class="c1">#add instrument eval to eval_score</span>
+        <span class="n">eval_score</span> <span class="o">+=</span> <span class="n">inst_eval</span>
         
         <span class="k">return</span> <span class="n">eval_score</span></div>
 
