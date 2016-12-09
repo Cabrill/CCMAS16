@@ -1,3 +1,6 @@
+'''
+.. py:module:: Music_util
+'''
 import pyknon, operator, numpy, random, nltk, math
 from os import listdir
 from os.path import isfile, join

@@ -1,11 +1,5 @@
 '''
-.. py:module:: markov
-    :platform: Unix
-
-First Week's homework.
-Student name:  Jared Bagley
-Student Username: JBagley
-Student ID: 014737165
+.. py:module:: Markov_chain
 '''
 import re
 import operator
@@ -22,6 +16,9 @@ def sanitize(token_list):
     allow any alphanumeric character and the underscore, which should be 
     sufficient, but also filtering out characters which are considered
     un-printable by a string.
+    
+    :param list token_list: The list of tokens to be sanitized
+    :returns:  A subset of the token_list containing only valid words
     '''
     
     # Using regular expression of a valid word
@@ -46,6 +43,10 @@ def likelihood(text, state_transition_probabilities):
     multiplying the intial probability by the probability of the next word,
     continuing until every consecutive probability is incorporated.  This results in
     the combinatorial probability of the full text.
+    
+    :param string text: The text to be evaluated for its probability of occurrence
+    :param dictionary state_transition_probabilities: The state transition probabilities for use in calculation
+    :returns: double value representing the probability of the text occurring given the probabilities specified
     '''
 
     #Assume initial probability of 0%
@@ -79,6 +80,12 @@ def likelihood(text, state_transition_probabilities):
     return probability;
     
 def determineOrder(state_transition_probabilities):
+    '''
+    Inspects the state transition probabilities and determines what order it uses
+    
+    :param dictionary state_transition_probabilities: The state transition probabilities
+    :returns:  int representing Markov Chain order of the state transition probabilities
+    '''
     # Calculate the order used by the state transition probabilities list
     maxOrder = [token.count(' ') for token in state_transition_probabilities.keys() if token.count(' ') > 0]
 
@@ -94,6 +101,11 @@ def generate(state_transition_probabilities, length=10, start=None):
     '''
     Given a model of state transition probabilities, construct a new artifact
     of supplied length, starting from the initial word given, if any.
+    
+    :param dictionary state_transition_probabilities: The state_transition probabilities used to generate next text
+    :param int length: The length of the string to be created (optional)
+    :param string start:  The starting state to be used (optional)
+    :returns:  The new text that has been generated
     '''
     order = determineOrder(state_transition_probabilities)
     # Calculate the order used by the state transition probabilities list
@@ -160,6 +172,9 @@ def format_for_printing(raw_text):
     Takes raw text that has resulted from a markov chain and removes spaces
     between punctuation tokens, capitalizes the first word to make the, adds
     a period at the end to make the sentence more readable
+    
+    :param string raw_text: The text to be formatted for display
+    :returns: The text that has been properly formatted for display.
     '''
     formatted_string = raw_text
     formatted_string=formatted_string.replace(" .", ".")
@@ -191,6 +206,11 @@ def replace_maintaining_case(raw_text, find_text, replace_text):
     '''
     Takes raw text, and something to be replaced, but maintains the original_text
     case of the letters being replaced
+    
+    :param string raw_text: The original text to have replacements occurrence
+    :param string find_text: The text to be found in the raw_text
+    :param string replace_text: The text that should replace the found text
+    :returns: The resulting text after replacement occurs
     '''
     return re.sub(find_text,
              lambda m: replacement_func(m, replace_text),
@@ -200,6 +220,10 @@ def replacement_func(match, repl_pattern):
     '''
     Function for replacing text, found on StackOverflow:
     http://stackoverflow.com/questions/9208786/best-way-to-do-a-case-insensitive-replace-but-match-the-case-of-the-word-to-be-r
+    
+    :param string match: The matching text found
+    :param string repl_pattern: The text to be substituted
+    :returns: The resulting text after replacement occurs
     '''
     match_str = match.group(0)
     repl = ''.join([r_char if m_char.islower() else r_char.upper()
@@ -211,6 +235,11 @@ def markov_chain(raw_text, should_sanitize=True, order=1):
     '''
     Derive a model of state transition probabilities from supplied raw 
     text, after sanitizing the text, unless specified not to.
+    
+    :param string raw_text: The text to base the new markov chain on
+    :param bool should_sanitize: Flag indicator on whether text should be sanitized before evaluation
+    :param int order: The order to employ in Markov Chain creation
+    :returns:  {probs, transitions} The state transition probabilities and the state transitions
     '''
     # Replace more than one subsequent whitespace chars with one space
     raw_text = re.sub(r'\s+', ' ', raw_text)

@@ -1,7 +1,4 @@
 '''
-.. py:module:: mfmc
-    :platform: Unix
-
 MFMC(Music From Multiple Content) project to create music(lyrics+tracks) using multiple agents in a `creamas <https://github.com/assamite/creamas/>`_ environment and using the `pyknon <http://kroger.github.io/pyknon/>`_ library
 to create MIDI files.
 '''
@@ -26,7 +23,7 @@ logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.DEBUG)
     
 class ServiceAgent(CreativeAgent):
-    '''Agent which defines a service for other agents to use.
+    '''Agent which allows MusicAgents to request the address of another
     '''
 
     def __init__(self, env):
@@ -46,11 +43,17 @@ class ServiceAgent(CreativeAgent):
         return
         
 class MusicEnvironment(Environment):
-
+    '''
+    An environment for our MusicAgents to interact.
+    '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def vote(self, age):
+        '''
+        Perform the act of voting on this rounds artifacts to select the best one available
+        from all participating agents.
+        '''
         artifacts = self.perform_voting(method='mean')
         if len(artifacts) > 0:
             accepted = artifacts[0][0]
@@ -81,6 +84,11 @@ class MusicEnvironment(Environment):
         input("Playing artifact's music.  Press a key for next voting round...")
         
     def save_midi(self, artifact):
+        '''
+        Saves the track list in the artifact to a MIDI file
+        
+        :param artifact: :class:`~creamas.core.Artifact` containing the track list to be written
+        '''
         track_list = artifact.obj[3]
         music_theme = artifact.obj[2]
         word_theme = artifact.obj[1]
@@ -94,6 +102,11 @@ class MusicEnvironment(Environment):
         return file_name
         
     def play_midi(self, filepath):
+        '''
+        Plays the MIDI file at the specified path.
+        
+        :param str filepath: The filename of the MIDI file to play
+        '''
         if platform.system().lower().startswith('darwin'):
             subprocess.call(('open', filepath))
         elif os.name == 'nt':
@@ -117,6 +130,12 @@ def getTextFromFile(filename):
     return raw_text;
     
 def read_text(self, mypath="InspiringSet/"):
+    '''
+    Reads the contents of the Inspiring Set folder to find TXT files.
+    
+    :returns:
+        a list of TXT file names of files contained in the path
+    '''
     text_files = [f  for f in listdir(mypath) if isfile(join(mypath, f)) and str(f).endswith(".txt")]
     return text_files
     

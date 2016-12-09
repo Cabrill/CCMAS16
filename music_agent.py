@@ -9,6 +9,8 @@ def levenshtein(s, t):
     '''Compute the edit distance between two strings.
 
     From Wikipedia article; Iterative with two matrix rows.
+    :param string: The origination string to be evaluated
+    :param string: The destination string to be compared against the origination
     '''
     if s == t: return 0
     elif len(s) == 0: return len(t)
@@ -33,41 +35,54 @@ class invention_method:
     and minimal statistics about the overall invention method
     '''
     def __init__(self, method_list):
+        '''        
+        :param list method_list: A list of methods accepting a string, used for invention
+        '''
         self.times_utilized = 0
         self.average_rating = 1
         self.method_list = method_list
 
 class MusicAgent(CreativeAgent):
-    '''A sample agent implementation.
+    '''An agent that creates music in the form of lyrics and instrument tracks.
 
-    Agent invents new words be generating them at random and evaluating them
-    with respect to its own vocabulary. 
-
-    Agent learns its vocabulary from the file given at initialization.
+    Agent invents new lyrics based on their Markov Chain probabilities computed
+    from inspecting their assigned TXT from the inspiration set at initialization.
+    Which is then modified when learning from new artifacts created by other agents.
     '''
 
-    def __init__(self, env, mcprobs, mcstates, helper, mem_len, service_addr, encoding='utf8', n=20,
-                 wlen_limits=(3,10), method_limits = 5, chars='abcdefghijklmnopqrstuvwxyz'):
+    def __init__(self, env, mcprobs, mcstates, helper, mem_len, service_addr, n=20,
+                 wlen_limits=(3,10), method_limits = 5):
         '''
         :param env:
             subclass of :py:class:`~creamas.core.environment.Environment`
-
-        :param str filename: Filename from which the words should be parsed.
-        :param str encoding: Encoding of the file
-
+   
+        :param dictionary mcprobs:  
+            The Markov Chain probabilities learned from the text
+        
+        :param dictionary mcstates: 
+            The Markov Chain state transitions learned from the text
+        
+        :param MusicHelper helper: 
+            A class with generic methods used to generate music from lyrics
+        
+        :param int mem_len: 
+            The maximum number of artifacts to store in agent's memory
+        
+        :param str service_addr:  
+            The address of the service_agent used to contact other agents
+        
         :param int n:
             The number of words the agent considers per :func:`invent`
 
         :param tuple wlen_limits:
             (int, int)-tuple, acceptable word length limits
-
-        :param str chars: acceptable characters in the words
+            
+        :param int method_limits:
+            The maximum number of invention methods this agent may keep concurrently
         '''
         super().__init__(env)
         self.n = n
-        self.chars = chars
         self.wlen_limits = wlen_limits
-        self.word_pattern = re.compile(r'^\w+$')
         self.MarkovChainProbs = mcprobs
         self.MarkovChainStates = mcstates
         self.mcpOrder = determineOrder(mcprobs)
@@ -111,6 +126,9 @@ class MusicAgent(CreativeAgent):
                     self.MarkovChainStates[pred][succ] += 1.0
 
     def compute_probabilities(self):
+        '''Computes the probabilities of Markov Chain items representing state transitions from
+        word string of token length order to the next word.
+        '''
         # Compute total number of successors for each state
         totals = {}
         for pred, succ_counts in self.MarkovChainStates.items():
@@ -126,10 +144,13 @@ class MusicAgent(CreativeAgent):
     def grammar_check(self, artifact):
         '''This is meant to be a simple way to exclude artifacts that
         end in a word known to be invalid ending for a sentence.
+        
+        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated
+        :returns: A score of the artifact's employed grammar, from 0 to 1.
         '''
         score = 1
         words = nltk.word_tokenize(artifact.obj[0])
-        if ''.join(words[-1:]) in ("and", "the", "of", "if", "their", "a", "as", "but" ):
+        if ''.join(words[-1:]) in ("and", "the", "of", "if", "their", "a", "as", "but", "or" ):
             score = 0
         return score
         
@@ -146,6 +167,8 @@ class MusicAgent(CreativeAgent):
         length = Token length / maximum token length.  This favors longer artifacts.
         
         grammar = Simple grammar check, that invalidates an artifact if it fails.
+        
+        music = Evaluation of use of patterns and instrument choices
        
         :param artifact: :class:`~creamas.core.Artifact` to be evaluated
         :returns:
@@ -338,7 +361,6 @@ class MusicAgent(CreativeAgent):
         into separate tracks, choosing a theme based on the text and then matching the tracks up.
 
         :returns: word_theme=a string representing inspiration, music_theme=tempo and instrument list, track_list=list of tracks composed of notes
-        
         '''
         #Read in characters in the lyrics, and convert to musical notes
         derived_notes = self.music_helper.convert_phrase_to_notes(lyrics)
@@ -496,6 +518,7 @@ class MusicAgent(CreativeAgent):
         '''
         Agent creates a new invention method, using the current lyrics as a seed of inspiration
         :param lyrics: string to be used for generation of a new method, if necessary
+        :returns: A list of invention_methods.
         '''
         method_list = []
         lyrics_tokens = nltk.word_tokenize(lyrics)
@@ -561,7 +584,7 @@ class MusicAgent(CreativeAgent):
         return best_artifact
 
     async def act(self):
-        '''Agent acts by inventing new artifacts.
+        '''Agent acts by inventing new artifacts, considering methods, and learning from other examples
         '''
         #If there are artifacts available in the domain, learn from one
         if len(self.env.artifacts) > 0:
@@ -612,6 +635,7 @@ class MusicAgent(CreativeAgent):
         for their opinion on the artifact, and an artifact of their own.
         
         :param artifact sender_artifact: The artifact the sender wishes to be evaluated
+        :returns:  An opinion of received artifact, and an artifact for the requestor
         '''
         my_opinion = self.value(senders_artifact)[0]
         
