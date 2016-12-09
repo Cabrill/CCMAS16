@@ -505,7 +505,7 @@
 <div class="viewcode-block" id="MusicAgent.reconsider_invention_methods"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.reconsider_invention_methods">[docs]</a>    <span class="k">def</span> <span class="nf">reconsider_invention_methods</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Allows an agent to create new invention methods, or replace a poorly performing method.</span>
-<span class="sd">        :param lyrics: string to be used for generation of a new method</span>
+<span class="sd">        :param string lyrics: Lyrics to be used as inspiration for generation of a new method</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="c1">#First check if we&#39;ve filled our maximum number of methods</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_limit</span><span class="p">:</span>
