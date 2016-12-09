@@ -43,14 +43,21 @@
             
   <div class="section" id="module-mc">
 <span id="mc-module"></span><h1>mc module<a class="headerlink" href="#module-mc" title="Permalink to this headline">¶</a></h1>
-<span class="target" id="module-markov"></span><p>First Week&#8217;s homework.
-Student name:  Jared Bagley
-Student Username: JBagley
-Student ID: 014737165</p>
-<dl class="function">
+<span class="target" id="module-Markov_chain"></span><dl class="function">
 <dt id="mc.determineOrder">
 <code class="descclassname">mc.</code><code class="descname">determineOrder</code><span class="sig-paren">(</span><em>state_transition_probabilities</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#determineOrder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.determineOrder" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Inspects the state transition probabilities and determines what order it uses</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>state_transition_probabilities</strong> (<em>dictionary</em>) &#8211; The state transition probabilities</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">int representing Markov Chain order of the state transition probabilities</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="mc.format_for_printing">
@@ -58,6 +65,16 @@ Student ID: 014737165</p>
 <dd><p>Takes raw text that has resulted from a markov chain and removes spaces
 between punctuation tokens, capitalizes the first word to make the, adds
 a period at the end to make the sentence more readable</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>raw_text</strong> (<em>string</em>) &#8211; The text to be formatted for display</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The text that has been properly formatted for display.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -65,6 +82,22 @@ a period at the end to make the sentence more readable</p>
 <code class="descclassname">mc.</code><code class="descname">generate</code><span class="sig-paren">(</span><em>state_transition_probabilities</em>, <em>length=10</em>, <em>start=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.generate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a model of state transition probabilities, construct a new artifact
 of supplied length, starting from the initial word given, if any.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>state_transition_probabilities</strong> (<em>dictionary</em>) &#8211; The state_transition probabilities used to generate next text</li>
+<li><strong>length</strong> (<em>int</em>) &#8211; The length of the string to be created (optional)</li>
+<li><strong>start</strong> (<em>string</em>) &#8211; The starting state to be used (optional)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The new text that has been generated</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -76,6 +109,21 @@ word has a 100% probability, and then tallies the full text probability by
 multiplying the intial probability by the probability of the next word,
 continuing until every consecutive probability is incorporated.  This results in
 the combinatorial probability of the full text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>text</strong> (<em>string</em>) &#8211; The text to be evaluated for its probability of occurrence</li>
+<li><strong>state_transition_probabilities</strong> (<em>dictionary</em>) &#8211; The state transition probabilities for use in calculation</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">double value representing the probability of the text occurring given the probabilities specified</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -83,6 +131,22 @@ the combinatorial probability of the full text.</p>
 <code class="descclassname">mc.</code><code class="descname">markov_chain</code><span class="sig-paren">(</span><em>raw_text</em>, <em>should_sanitize=True</em>, <em>order=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#markov_chain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.markov_chain" title="Permalink to this definition">¶</a></dt>
 <dd><p>Derive a model of state transition probabilities from supplied raw 
 text, after sanitizing the text, unless specified not to.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>raw_text</strong> (<em>string</em>) &#8211; The text to base the new markov chain on</li>
+<li><strong>should_sanitize</strong> (<em>bool</em>) &#8211; Flag indicator on whether text should be sanitized before evaluation</li>
+<li><strong>order</strong> (<em>int</em>) &#8211; The order to employ in Markov Chain creation</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">{probs, transitions} The state transition probabilities and the state transitions</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -90,6 +154,22 @@ text, after sanitizing the text, unless specified not to.</p>
 <code class="descclassname">mc.</code><code class="descname">replace_maintaining_case</code><span class="sig-paren">(</span><em>raw_text</em>, <em>find_text</em>, <em>replace_text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#replace_maintaining_case"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.replace_maintaining_case" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes raw text, and something to be replaced, but maintains the original_text
 case of the letters being replaced</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>raw_text</strong> (<em>string</em>) &#8211; The original text to have replacements occurrence</li>
+<li><strong>find_text</strong> (<em>string</em>) &#8211; The text to be found in the raw_text</li>
+<li><strong>replace_text</strong> (<em>string</em>) &#8211; The text that should replace the found text</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The resulting text after replacement occurs</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -97,6 +177,21 @@ case of the letters being replaced</p>
 <code class="descclassname">mc.</code><code class="descname">replacement_func</code><span class="sig-paren">(</span><em>match</em>, <em>repl_pattern</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#replacement_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.replacement_func" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function for replacing text, found on StackOverflow:
 <a class="reference external" href="http://stackoverflow.com/questions/9208786/best-way-to-do-a-case-insensitive-replace-but-match-the-case-of-the-word-to-be-r">http://stackoverflow.com/questions/9208786/best-way-to-do-a-case-insensitive-replace-but-match-the-case-of-the-word-to-be-r</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>match</strong> (<em>string</em>) &#8211; The matching text found</li>
+<li><strong>repl_pattern</strong> (<em>string</em>) &#8211; The text to be substituted</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The resulting text after replacement occurs</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -107,6 +202,16 @@ and removes any words with non-printable characters. This will
 allow any alphanumeric character and the underscore, which should be 
 sufficient, but also filtering out characters which are considered
 un-printable by a string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>token_list</strong> (<em>list</em>) &#8211; The list of tokens to be sanitized</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A subset of the token_list containing only valid words</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>

@@ -53,6 +53,8 @@
     <span class="sd">&#39;&#39;&#39;Compute the edit distance between two strings.</span>
 
 <span class="sd">    From Wikipedia article; Iterative with two matrix rows.</span>
+<span class="sd">    :param string: The origination string to be evaluated</span>
+<span class="sd">    :param string: The destination string to be compared against the origination</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="n">t</span><span class="p">:</span> <span class="k">return</span> <span class="mi">0</span>
     <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
@@ -77,41 +79,54 @@
 <span class="sd">    and minimal statistics about the overall invention method</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_list</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;        </span>
+<span class="sd">        :param list method_list: A list of methods accepting a string, used for invention</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">times_utilized</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">average_rating</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">method_list</span> <span class="o">=</span> <span class="n">method_list</span></div>
 
 <div class="viewcode-block" id="MusicAgent"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent">[docs]</a><span class="k">class</span> <span class="nc">MusicAgent</span><span class="p">(</span><span class="n">CreativeAgent</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A sample agent implementation.</span>
+    <span class="sd">&#39;&#39;&#39;An agent that creates music in the form of lyrics and instrument tracks.</span>
 
-<span class="sd">    Agent invents new words be generating them at random and evaluating them</span>
-<span class="sd">    with respect to its own vocabulary. </span>
-
-<span class="sd">    Agent learns its vocabulary from the file given at initialization.</span>
+<span class="sd">    Agent invents new lyrics based on their Markov Chain probabilities computed</span>
+<span class="sd">    from inspecting their assigned TXT from the inspiration set at initialization.</span>
+<span class="sd">    Which is then modified when learning from new artifacts created by other agents.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">mcprobs</span><span class="p">,</span> <span class="n">mcstates</span><span class="p">,</span> <span class="n">helper</span><span class="p">,</span> <span class="n">mem_len</span><span class="p">,</span> <span class="n">service_addr</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf8&#39;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-                 <span class="n">wlen_limits</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">method_limits</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">chars</span><span class="o">=</span><span class="s1">&#39;abcdefghijklmnopqrstuvwxyz&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">mcprobs</span><span class="p">,</span> <span class="n">mcstates</span><span class="p">,</span> <span class="n">helper</span><span class="p">,</span> <span class="n">mem_len</span><span class="p">,</span> <span class="n">service_addr</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                 <span class="n">wlen_limits</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">method_limits</span> <span class="o">=</span> <span class="mi">5</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        :param env:</span>
 <span class="sd">            subclass of :py:class:`~creamas.core.environment.Environment`</span>
-
-<span class="sd">        :param str filename: Filename from which the words should be parsed.</span>
-<span class="sd">        :param str encoding: Encoding of the file</span>
-
+<span class="sd">   </span>
+<span class="sd">        :param dictionary mcprobs:  </span>
+<span class="sd">            The Markov Chain probabilities learned from the text</span>
+<span class="sd">        </span>
+<span class="sd">        :param dictionary mcstates: </span>
+<span class="sd">            The Markov Chain state transitions learned from the text</span>
+<span class="sd">        </span>
+<span class="sd">        :param MusicHelper helper: </span>
+<span class="sd">            A class with generic methods used to generate music from lyrics</span>
+<span class="sd">        </span>
+<span class="sd">        :param int mem_len: </span>
+<span class="sd">            The maximum number of artifacts to store in agent&#39;s memory</span>
+<span class="sd">        </span>
+<span class="sd">        :param str service_addr:  </span>
+<span class="sd">            The address of the service_agent used to contact other agents</span>
+<span class="sd">        </span>
 <span class="sd">        :param int n:</span>
 <span class="sd">            The number of words the agent considers per :func:`invent`</span>
 
 <span class="sd">        :param tuple wlen_limits:</span>
 <span class="sd">            (int, int)-tuple, acceptable word length limits</span>
-
-<span class="sd">        :param str chars: acceptable characters in the words</span>
+<span class="sd">            </span>
+<span class="sd">        :param int method_limits:</span>
+<span class="sd">            The maximum number of invention methods this agent may keep concurrently</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">chars</span> <span class="o">=</span> <span class="n">chars</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wlen_limits</span> <span class="o">=</span> <span class="n">wlen_limits</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">word_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;^\w+$&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span> <span class="o">=</span> <span class="n">mcprobs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainStates</span> <span class="o">=</span> <span class="n">mcstates</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mcpOrder</span> <span class="o">=</span> <span class="n">determineOrder</span><span class="p">(</span><span class="n">mcprobs</span><span class="p">)</span>
@@ -155,6 +170,9 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainStates</span><span class="p">[</span><span class="n">pred</span><span class="p">][</span><span class="n">succ</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">1.0</span></div>
 
 <div class="viewcode-block" id="MusicAgent.compute_probabilities"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.compute_probabilities">[docs]</a>    <span class="k">def</span> <span class="nf">compute_probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Computes the probabilities of Markov Chain items representing state transitions from</span>
+<span class="sd">        word string of token length order to the next word.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="c1"># Compute total number of successors for each state</span>
         <span class="n">totals</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ_counts</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainStates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -170,10 +188,13 @@
 <div class="viewcode-block" id="MusicAgent.grammar_check"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.grammar_check">[docs]</a>    <span class="k">def</span> <span class="nf">grammar_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;This is meant to be a simple way to exclude artifacts that</span>
 <span class="sd">        end in a word known to be invalid ending for a sentence.</span>
+<span class="sd">        </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated</span>
+<span class="sd">        :returns: A score of the artifact&#39;s employed grammar, from 0 to 1.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">score</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">words</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">if</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;and&quot;</span><span class="p">,</span> <span class="s2">&quot;the&quot;</span><span class="p">,</span> <span class="s2">&quot;of&quot;</span><span class="p">,</span> <span class="s2">&quot;if&quot;</span><span class="p">,</span> <span class="s2">&quot;their&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;as&quot;</span><span class="p">,</span> <span class="s2">&quot;but&quot;</span> <span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;and&quot;</span><span class="p">,</span> <span class="s2">&quot;the&quot;</span><span class="p">,</span> <span class="s2">&quot;of&quot;</span><span class="p">,</span> <span class="s2">&quot;if&quot;</span><span class="p">,</span> <span class="s2">&quot;their&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;as&quot;</span><span class="p">,</span> <span class="s2">&quot;but&quot;</span><span class="p">,</span> <span class="s2">&quot;or&quot;</span> <span class="p">):</span>
             <span class="n">score</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="n">score</span></div>
         
@@ -190,6 +211,8 @@
 <span class="sd">        length = Token length / maximum token length.  This favors longer artifacts.</span>
 <span class="sd">        </span>
 <span class="sd">        grammar = Simple grammar check, that invalidates an artifact if it fails.</span>
+<span class="sd">        </span>
+<span class="sd">        music = Evaluation of use of patterns and instrument choices</span>
 <span class="sd">       </span>
 <span class="sd">        :param artifact: :class:`~creamas.core.Artifact` to be evaluated</span>
 <span class="sd">        :returns:</span>
@@ -246,14 +269,19 @@
         <span class="k">return</span> <span class="n">evaluation</span><span class="p">,</span> <span class="n">framing</span></div>
 
 <div class="viewcode-block" id="MusicAgent.eval_music"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_music">[docs]</a>    <span class="k">def</span> <span class="nf">eval_music</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">artifact</span><span class="p">):</span>
-
+        <span class="sd">&#39;&#39;&#39;Attempts to evaluate the quality of music by looking at instrument selection</span>
+<span class="sd">        and pattern repetition.</span>
+<span class="sd">        </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated</span>
+<span class="sd">        :returns: double value from 0 to 1 representing the quality of music</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="c1">#evaluate instruments</span>
 
         <span class="c1">#according to midi standard sounds list(see http://soundprogramming.net/file-formats/general-midi-instrument-list/) we decided:</span>
         <span class="c1"># Lead:</span>
         <span class="c1"># 1: 8, 25: 31, 41: 43, 57, 65: 72, 73: 80, 105: 112</span>
         <span class="c1">#</span>
-        <span class="c1"># Rythm:</span>
+        <span class="c1"># Rhythm:</span>
         <span class="c1"># 17: 24, 25: 31, 33: 40, 41: 48, 49: 56, 57: 64,</span>
         <span class="c1">#</span>
         <span class="c1"># Percussion:</span>
@@ -264,7 +292,7 @@
         <span class="n">inst_eval</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">lead</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">25</span><span class="p">))</span><span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span><span class="mi">31</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">41</span><span class="p">,</span><span class="mi">43</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span><span class="mi">80</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">105</span><span class="p">,</span><span class="mi">112</span><span class="p">))</span> <span class="c1">#appropriate lead sounds</span>
         <span class="n">lead</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">57</span><span class="p">)</span>
-        <span class="n">rythm</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">17</span><span class="p">,</span><span class="mi">24</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span><span class="mi">31</span><span class="p">))</span> <span class="o">+</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">33</span><span class="p">,</span><span class="mi">64</span><span class="p">))</span> <span class="c1">#appropriate rythm sounds</span>
+        <span class="n">rhythm</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">17</span><span class="p">,</span><span class="mi">24</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span><span class="mi">31</span><span class="p">))</span> <span class="o">+</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">33</span><span class="p">,</span><span class="mi">64</span><span class="p">))</span> <span class="c1">#appropriate rhythm sounds</span>
         <span class="n">percussion</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="mi">16</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">81</span><span class="p">,</span><span class="mi">104</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">113</span><span class="p">,</span><span class="mi">120</span><span class="p">))</span> <span class="c1">#appropriate percussion sounds</span>
         <span class="n">bad</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">121</span><span class="p">,</span><span class="mi">128</span><span class="p">))</span> <span class="c1">#inappropriate sounds for a song</span>
         <span class="n">bad</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
@@ -276,7 +304,7 @@
             <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">3</span>
         <span class="k">elif</span> <span class="n">ins1</span> <span class="ow">in</span> <span class="n">lead</span><span class="p">:</span> <span class="c1">#best score for lead sounds</span>
             <span class="n">inst_eval</span> <span class="o">+=</span> <span class="mi">2</span>
-        <span class="k">elif</span> <span class="n">ins1</span> <span class="ow">in</span> <span class="n">rythm</span><span class="p">:</span> <span class="c1">#good score for rythm sounds</span>
+        <span class="k">elif</span> <span class="n">ins1</span> <span class="ow">in</span> <span class="n">rhythm</span><span class="p">:</span> <span class="c1">#good score for rhythm sounds</span>
             <span class="n">inst_eval</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">else</span><span class="p">:</span> <span class="c1">#bad score for percussions</span>
             <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">2</span>
@@ -285,7 +313,7 @@
             <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">3</span>
         <span class="k">elif</span> <span class="n">ins2</span> <span class="ow">in</span> <span class="n">lead</span><span class="p">:</span> <span class="c1">#good score for lead sounds</span>
             <span class="n">inst_eval</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">elif</span> <span class="n">ins2</span> <span class="ow">in</span> <span class="n">rythm</span><span class="p">:</span> <span class="c1">#best score for rythm sounds</span>
+        <span class="k">elif</span> <span class="n">ins2</span> <span class="ow">in</span> <span class="n">rhythm</span><span class="p">:</span> <span class="c1">#best score for rhythm sounds</span>
             <span class="n">inst_eval</span> <span class="o">+=</span> <span class="mi">2</span>
         <span class="k">else</span><span class="p">:</span> <span class="c1">#bad score for percussions</span>
             <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">2</span>
@@ -294,7 +322,7 @@
             <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">3</span>
         <span class="k">elif</span> <span class="n">ins3</span> <span class="ow">in</span> <span class="n">percussion</span><span class="p">:</span> <span class="c1">#best score for percussions</span>
             <span class="n">inst_eval</span> <span class="o">+=</span> <span class="mi">2</span>
-        <span class="k">else</span><span class="p">:</span> <span class="c1">#bad score for rythm or lead sounds</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1">#bad score for rhythm or lead sounds</span>
             <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">2</span>
 
 
@@ -377,7 +405,6 @@
 <span class="sd">        into separate tracks, choosing a theme based on the text and then matching the tracks up.</span>
 
 <span class="sd">        :returns: word_theme=a string representing inspiration, music_theme=tempo and instrument list, track_list=list of tracks composed of notes</span>
-<span class="sd">        </span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="c1">#Read in characters in the lyrics, and convert to musical notes</span>
         <span class="n">derived_notes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">convert_phrase_to_notes</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
@@ -535,6 +562,7 @@
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Agent creates a new invention method, using the current lyrics as a seed of inspiration</span>
 <span class="sd">        :param lyrics: string to be used for generation of a new method, if necessary</span>
+<span class="sd">        :returns: A list of invention_methods.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">method_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">lyrics_tokens</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
@@ -600,7 +628,7 @@
         <span class="k">return</span> <span class="n">best_artifact</span></div>
 
 <div class="viewcode-block" id="MusicAgent.act"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.act">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">act</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Agent acts by inventing new artifacts.</span>
+        <span class="sd">&#39;&#39;&#39;Agent acts by inventing new artifacts, considering methods, and learning from other examples</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="c1">#If there are artifacts available in the domain, learn from one</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">artifacts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -651,6 +679,7 @@
 <span class="sd">        for their opinion on the artifact, and an artifact of their own.</span>
 <span class="sd">        </span>
 <span class="sd">        :param artifact sender_artifact: The artifact the sender wishes to be evaluated</span>
+<span class="sd">        :returns:  An opinion of received artifact, and an artifact for the requestor</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">my_opinion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">senders_artifact</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         

@@ -45,16 +45,16 @@
 <span id="music-agent-module"></span><h1>music_agent module<a class="headerlink" href="#module-music_agent" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="music_agent.MusicAgent">
-<em class="property">class </em><code class="descclassname">music_agent.</code><code class="descname">MusicAgent</code><span class="sig-paren">(</span><em>env</em>, <em>mcprobs</em>, <em>mcstates</em>, <em>helper</em>, <em>mem_len</em>, <em>service_addr</em>, <em>encoding='utf8'</em>, <em>n=20</em>, <em>wlen_limits=(3</em>, <em>10)</em>, <em>method_limits=5</em>, <em>chars='abcdefghijklmnopqrstuvwxyz'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">music_agent.</code><code class="descname">MusicAgent</code><span class="sig-paren">(</span><em>env</em>, <em>mcprobs</em>, <em>mcstates</em>, <em>helper</em>, <em>mem_len</em>, <em>service_addr</em>, <em>n=20</em>, <em>wlen_limits=(3</em>, <em>10)</em>, <em>method_limits=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">creamas.core.agent.CreativeAgent</span></code></p>
-<p>A sample agent implementation.</p>
-<p>Agent invents new words be generating them at random and evaluating them
-with respect to its own vocabulary.</p>
-<p>Agent learns its vocabulary from the file given at initialization.</p>
+<p>An agent that creates music in the form of lyrics and instrument tracks.</p>
+<p>Agent invents new lyrics based on their Markov Chain probabilities computed
+from inspecting their assigned TXT from the inspiration set at initialization.
+Which is then modified when learning from new artifacts created by other agents.</p>
 <dl class="method">
 <dt id="music_agent.MusicAgent.act">
 <code class="descname">act</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.act"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.act" title="Permalink to this definition">¶</a></dt>
-<dd><p>Agent acts by inventing new artifacts.</p>
+<dd><p>Agent acts by inventing new artifacts, considering methods, and learning from other examples</p>
 </dd></dl>
 
 <dl class="method">
@@ -68,13 +68,16 @@ using the probability of the first two words in the lyrics as a seed.
 <dl class="method">
 <dt id="music_agent.MusicAgent.compute_probabilities">
 <code class="descname">compute_probabilities</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.compute_probabilities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.compute_probabilities" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Computes the probabilities of Markov Chain items representing state transitions from
+word string of token length order to the next word.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="music_agent.MusicAgent.create_an_invention_method">
 <code class="descname">create_an_invention_method</code><span class="sig-paren">(</span><em>lyrics</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.create_an_invention_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.create_an_invention_method" title="Permalink to this definition">¶</a></dt>
 <dd><p>Agent creates a new invention method, using the current lyrics as a seed of inspiration
-:param lyrics: string to be used for generation of a new method, if necessary</p>
+:param lyrics: string to be used for generation of a new method, if necessary
+:returns: A list of invention_methods.</p>
 </dd></dl>
 
 <dl class="method">
@@ -96,7 +99,19 @@ into separate tracks, choosing a theme based on the text and then matching the t
 <dl class="method">
 <dt id="music_agent.MusicAgent.eval_music">
 <code class="descname">eval_music</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.eval_music"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.eval_music" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Attempts to evaluate the quality of music by looking at instrument selection
+and pattern repetition.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the music to be evaluated</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">double value from 0 to 1 representing the quality of music</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="music_agent.MusicAgent.evaluate">
@@ -136,6 +151,16 @@ in <code class="docutils literal"><span class="pre">wlen_limits</span></code>.</
 <code class="descname">grammar_check</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.grammar_check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.grammar_check" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is meant to be a simple way to exclude artifacts that
 end in a word known to be invalid ending for a sentence.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the lyrics to be evaluated</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A score of the artifact&#8217;s employed grammar, from 0 to 1.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -217,6 +242,8 @@ for their opinion on the artifact, and an artifact of their own.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sender_artifact</strong> (<em>artifact</em>) &#8211; The artifact the sender wishes to be evaluated</td>
 </tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An opinion of received artifact, and an artifact for the requestor</td>
+</tr>
 </tbody>
 </table>
 </dd></dl>
@@ -234,6 +261,7 @@ markov chain that the agent knows.</p>
 </dl>
 <p>length = Token length / maximum token length.  This favors longer artifacts.</p>
 <p>grammar = Simple grammar check, that invalidates an artifact if it fails.</p>
+<p>music = Evaluation of use of patterns and instrument choices</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -261,7 +289,9 @@ and minimal statistics about the overall invention method</p>
 <dt id="music_agent.levenshtein">
 <code class="descclassname">music_agent.</code><code class="descname">levenshtein</code><span class="sig-paren">(</span><em>s</em>, <em>t</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#levenshtein"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.levenshtein" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the edit distance between two strings.</p>
-<p>From Wikipedia article; Iterative with two matrix rows.</p>
+<p>From Wikipedia article; Iterative with two matrix rows.
+:param string: The origination string to be evaluated
+:param string: The destination string to be compared against the origination</p>
 </dd></dl>
 
 </div>

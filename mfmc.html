@@ -43,26 +43,47 @@
             
   <div class="section" id="module-mfmc">
 <span id="mfmc-module"></span><h1>mfmc module<a class="headerlink" href="#module-mfmc" title="Permalink to this headline">¶</a></h1>
-<span class="target" id="module-mfmc"></span><p>MFMC(Music From Multiple Content) project to create music(lyrics+tracks) using multiple agents in a <a class="reference external" href="https://github.com/assamite/creamas/">creamas</a> environment and using the <a class="reference external" href="http://kroger.github.io/pyknon/">pyknon</a> library
+<p>MFMC(Music From Multiple Content) project to create music(lyrics+tracks) using multiple agents in a <a class="reference external" href="https://github.com/assamite/creamas/">creamas</a> environment and using the <a class="reference external" href="http://kroger.github.io/pyknon/">pyknon</a> library
 to create MIDI files.</p>
 <dl class="class">
 <dt id="mfmc.MusicEnvironment">
 <em class="property">class </em><code class="descclassname">mfmc.</code><code class="descname">MusicEnvironment</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mfmc.html#MusicEnvironment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfmc.MusicEnvironment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">creamas.core.environment.Environment</span></code></p>
+<p>An environment for our MusicAgents to interact.</p>
 <dl class="method">
 <dt id="mfmc.MusicEnvironment.play_midi">
 <code class="descname">play_midi</code><span class="sig-paren">(</span><em>filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mfmc.html#MusicEnvironment.play_midi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfmc.MusicEnvironment.play_midi" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Plays the MIDI file at the specified path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filepath</strong> (<em>str</em>) &#8211; The filename of the MIDI file to play</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfmc.MusicEnvironment.save_midi">
 <code class="descname">save_midi</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mfmc.html#MusicEnvironment.save_midi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfmc.MusicEnvironment.save_midi" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Saves the track list in the artifact to a MIDI file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the track list to be written</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfmc.MusicEnvironment.vote">
 <code class="descname">vote</code><span class="sig-paren">(</span><em>age</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mfmc.html#MusicEnvironment.vote"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfmc.MusicEnvironment.vote" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Perform the act of voting on this rounds artifacts to select the best one available
+from all participating agents.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -70,7 +91,7 @@ to create MIDI files.</p>
 <dt id="mfmc.ServiceAgent">
 <em class="property">class </em><code class="descclassname">mfmc.</code><code class="descname">ServiceAgent</code><span class="sig-paren">(</span><em>env</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mfmc.html#ServiceAgent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfmc.ServiceAgent" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">creamas.core.agent.CreativeAgent</span></code></p>
-<p>Agent which defines a service for other agents to use.</p>
+<p>Agent which allows MusicAgents to request the address of another</p>
 <dl class="method">
 <dt id="mfmc.ServiceAgent.act">
 <code class="descname">act</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/mfmc.html#ServiceAgent.act"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfmc.ServiceAgent.act" title="Permalink to this definition">¶</a></dt>
@@ -104,7 +125,16 @@ Note:  At this time, an agent can be given itself.</p>
 <dl class="function">
 <dt id="mfmc.read_text">
 <code class="descclassname">mfmc.</code><code class="descname">read_text</code><span class="sig-paren">(</span><em>self</em>, <em>mypath='InspiringSet/'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mfmc.html#read_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfmc.read_text" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Reads the contents of the Inspiring Set folder to find TXT files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a list of TXT file names of files contained in the path</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 

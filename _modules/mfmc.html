@@ -43,9 +43,6 @@
             
   <h1>Source code for mfmc</h1><div class="highlight"><pre>
 <span></span><span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">.. py:module:: mfmc</span>
-<span class="sd">    :platform: Unix</span>
-
 <span class="sd">MFMC(Music From Multiple Content) project to create music(lyrics+tracks) using multiple agents in a `creamas &lt;https://github.com/assamite/creamas/&gt;`_ environment and using the `pyknon &lt;http://kroger.github.io/pyknon/&gt;`_ library</span>
 <span class="sd">to create MIDI files.</span>
 <span class="sd">&#39;&#39;&#39;</span>
@@ -70,7 +67,7 @@
 <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
     
 <div class="viewcode-block" id="ServiceAgent"><a class="viewcode-back" href="../mfmc.html#mfmc.ServiceAgent">[docs]</a><span class="k">class</span> <span class="nc">ServiceAgent</span><span class="p">(</span><span class="n">CreativeAgent</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Agent which defines a service for other agents to use.</span>
+    <span class="sd">&#39;&#39;&#39;Agent which allows MusicAgents to request the address of another</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
@@ -90,11 +87,17 @@
         <span class="k">return</span></div></div>
         
 <div class="viewcode-block" id="MusicEnvironment"><a class="viewcode-back" href="../mfmc.html#mfmc.MusicEnvironment">[docs]</a><span class="k">class</span> <span class="nc">MusicEnvironment</span><span class="p">(</span><span class="n">Environment</span><span class="p">):</span>
-
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    An environment for our MusicAgents to interact.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MusicEnvironment.vote"><a class="viewcode-back" href="../mfmc.html#mfmc.MusicEnvironment.vote">[docs]</a>    <span class="k">def</span> <span class="nf">vote</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">age</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Perform the act of voting on this rounds artifacts to select the best one available</span>
+<span class="sd">        from all participating agents.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">artifacts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">perform_voting</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">artifacts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">accepted</span> <span class="o">=</span> <span class="n">artifacts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
@@ -125,6 +128,11 @@
         <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Playing artifact&#39;s music.  Press a key for next voting round...&quot;</span><span class="p">)</span></div>
         
 <div class="viewcode-block" id="MusicEnvironment.save_midi"><a class="viewcode-back" href="../mfmc.html#mfmc.MusicEnvironment.save_midi">[docs]</a>    <span class="k">def</span> <span class="nf">save_midi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Saves the track list in the artifact to a MIDI file</span>
+<span class="sd">        </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the track list to be written</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">track_list</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
         <span class="n">music_theme</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
         <span class="n">word_theme</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -138,6 +146,11 @@
         <span class="k">return</span> <span class="n">file_name</span></div>
         
 <div class="viewcode-block" id="MusicEnvironment.play_midi"><a class="viewcode-back" href="../mfmc.html#mfmc.MusicEnvironment.play_midi">[docs]</a>    <span class="k">def</span> <span class="nf">play_midi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plays the MIDI file at the specified path.</span>
+<span class="sd">        </span>
+<span class="sd">        :param str filepath: The filename of the MIDI file to play</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;darwin&#39;</span><span class="p">):</span>
             <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">((</span><span class="s1">&#39;open&#39;</span><span class="p">,</span> <span class="n">filepath</span><span class="p">))</span>
         <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;nt&#39;</span><span class="p">:</span>
@@ -161,6 +174,12 @@
     <span class="k">return</span> <span class="n">raw_text</span><span class="p">;</span></div>
     
 <div class="viewcode-block" id="read_text"><a class="viewcode-back" href="../mfmc.html#mfmc.read_text">[docs]</a><span class="k">def</span> <span class="nf">read_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mypath</span><span class="o">=</span><span class="s2">&quot;InspiringSet/&quot;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Reads the contents of the Inspiring Set folder to find TXT files.</span>
+<span class="sd">    </span>
+<span class="sd">    :returns:</span>
+<span class="sd">        a list of TXT file names of files contained in the path</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">text_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span>  <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">mypath</span><span class="p">)</span> <span class="k">if</span> <span class="n">isfile</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">mypath</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.txt&quot;</span><span class="p">)]</span>
     <span class="k">return</span> <span class="n">text_files</span></div>
     
