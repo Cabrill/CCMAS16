@@ -6,7 +6,7 @@ from pyknon.music import NoteSeq, Rest
 
 class MusicHelper:
     '''
-    A class that contains methods for creating music from text, analyzing the music, and modifying it.
+    A class that contains useful methods for creating music from text, analyzing the music, and modifying it.
     '''
     #Hard-coded list of musical keys and their relative keys
     relative_keys = {
@@ -38,9 +38,9 @@ class MusicHelper:
 
     def __init__(self):
         self.music_keys = {}
-        self.read_keys()
+        self._read_keys()
         
-    def read_keys(self, mypath="keys/"):
+    def _read_keys(self, mypath="keys/"):
         '''
         Initialization method that reads in all available keys, in a specified path.
         
@@ -85,7 +85,7 @@ class MusicHelper:
     @staticmethod    
     def convert_phrase_to_notes(phrase):
         '''
-        Takes a phrase and converts it to musical notes by extracting characters that represent
+        Takes a text phrase and converts it to musical notes by extracting characters that represent
         musical notes.
         
         :param str phrase: Any string of text, to be converted to musical notes
@@ -149,6 +149,12 @@ class MusicHelper:
         '''
         Attempts to find patterns in lyrics to be paired with the given notes
         to create new tracks of a specified duration
+        
+        :param str lyrics:The lyrics from which to derive music
+        :param NoteSequ notes: The notes to be utilized in track creation
+        :param int track_duration: The optimal length of the tracks, in seconds
+        :param list method:A list of invention methods that derive data from text
+        :returns: A list of NoteSeqs that represents musical tracks
         '''
         num_notes = len(notes)
         lyrics_sentences = lyrics.replace("?", ".").replace("!", ".").split(".")
