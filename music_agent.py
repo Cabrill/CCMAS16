@@ -202,14 +202,19 @@ class MusicAgent(CreativeAgent):
         return evaluation, framing
 
     def eval_music(self,artifact):
-
+        '''Attempts to evaluate the quality of music by looking at instrument selection
+        and pattern repetition.
+        
+        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated
+        :returns: double value from 0 to 1 representing the quality of music
+        '''
         #evaluate instruments
 
         #according to midi standard sounds list(see http://soundprogramming.net/file-formats/general-midi-instrument-list/) we decided:
         # Lead:
         # 1: 8, 25: 31, 41: 43, 57, 65: 72, 73: 80, 105: 112
         #
-        # Rythm:
+        # Rhythm:
         # 17: 24, 25: 31, 33: 40, 41: 48, 49: 56, 57: 64,
         #
         # Percussion:
@@ -220,7 +225,7 @@ class MusicAgent(CreativeAgent):
         inst_eval = 0
         lead = list(range(8,25))+ list(range(25,31)) + list(range(41,43)) + list(range(65,80)) + list(range(105,112)) #appropriate lead sounds
         lead.append(57)
-        rythm = list(range(17,24)) + list(range(25,31)) +list(range(33,64)) #appropriate rythm sounds
+        rhythm = list(range(17,24)) + list(range(25,31)) +list(range(33,64)) #appropriate rhythm sounds
         percussion = list(range(9,16)) + list(range(81,104)) + list(range(113,120)) #appropriate percussion sounds
         bad = list(range(121,128)) #inappropriate sounds for a song
         bad.append(32)
@@ -232,7 +237,7 @@ class MusicAgent(CreativeAgent):
             inst_eval -= 3
         elif ins1 in lead: #best score for lead sounds
             inst_eval += 2
-        elif ins1 in rythm: #good score for rythm sounds
+        elif ins1 in rhythm: #good score for rhythm sounds
             inst_eval += 1
         else: #bad score for percussions
             inst_eval -= 2
@@ -241,7 +246,7 @@ class MusicAgent(CreativeAgent):
             inst_eval -= 3
         elif ins2 in lead: #good score for lead sounds
             inst_eval += 1
-        elif ins2 in rythm: #best score for rythm sounds
+        elif ins2 in rhythm: #best score for rhythm sounds
             inst_eval += 2
         else: #bad score for percussions
             inst_eval -= 2
@@ -250,7 +255,7 @@ class MusicAgent(CreativeAgent):
             inst_eval -= 3
         elif ins3 in percussion: #best score for percussions
             inst_eval += 2
-        else: #bad score for rythm or lead sounds
+        else: #bad score for rhythm or lead sounds
             inst_eval -= 2
 
 
