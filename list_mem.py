@@ -1,3 +1,6 @@
+'''
+Class that allows an agent to maintain a memory of recently seen artifacts.
+'''
 class ListMemory():
     '''Simple list memory which stores all seen artifacts as is into a list.
     '''

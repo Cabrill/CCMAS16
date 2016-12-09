@@ -1,3 +1,7 @@
+'''
+Markov Chain module that derives Markov Chain probabilities and state transitions of a specified order
+from given text.
+'''
 import re
 import operator
 import nltk

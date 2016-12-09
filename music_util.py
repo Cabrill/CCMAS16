@@ -1,3 +1,7 @@
+'''
+Contains generic methods and information (musical keys, MIDI instrument names) to be used by all
+MusicAgents in generation of their music.
+'''
 import pyknon, operator, numpy, random, nltk, math
 from os import listdir
 from os.path import isfile, join

@@ -1,3 +1,10 @@
+'''
+A MusicAgent creates lyrics and music using its uniquely personal invention methods which are created
+usings lyrics it has generated from its inspiring set.  Music is generated based on lyrics, using the
+invention method it matches to it based on the probability of the lyrics occurring using its Markov Chain
+probabilities.
+'''
+
 import aiomas, re, random, nltk, operator
 from creamas.core import CreativeAgent, Environment, Simulation, Artifact
 from mc import markov_chain, generate, sanitize, determineOrder, likelihood, format_for_printing
