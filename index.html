@@ -43,8 +43,11 @@
             
   <div class="section" id="welcome-to-mfmc-s-documentation">
 <h1>Welcome to MFMC&#8217;s documentation<a class="headerlink" href="#welcome-to-mfmc-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>MFMC is an acronym that stands for &#8216;MIDI From Multiple Contents&#8217; and represents a group project created by four students at the University of Helsinki.  This project is written entirely using Python 3.5, utilizes the <a class="reference external" href="https://pypi.python.org/pypi/creamas/0.1.0">Creamas</a> multi-agent library atop of aiomas, the <a class="reference external" href="http://www.nltk.org/">NLTK</a> language processing toolkit, and creates its MIDI files using the <a class="reference external" href="https://github.com/kroger/pyknon">Pyknon</a> library.  It supports creating a user-defined number of agents (default: 5)which are assigned reading material from the selection of TXT files placed in the <code class="docutils literal"><span class="pre">InspiringSet</span></code> subfolder.  After agents have sanitized the material, they will create Markov Chains based on word probability of a user-defined order (default: 1).</p>
+<p>MFMC is an acronym that stands for &#8216;MIDI From Multiple Contents&#8217; and represents a group project created by four students at the University of Helsinki.  This project is written entirely using Python 3.5, utilizes the <a class="reference external" href="https://pypi.python.org/pypi/creamas/0.1.0">Creamas</a> multi-agent library atop of aiomas, the <a class="reference external" href="http://www.nltk.org/">NLTK</a> language processing toolkit, and creates its MIDI files using the <a class="reference external" href="https://github.com/kroger/pyknon">Pyknon</a> library.  It supports creating a user-defined number of agents which are assigned reading material from the selection of TXT files placed in the <code class="docutils literal"><span class="pre">InspiringSet</span></code> subfolder.  After agents have sanitized the material, they will create Markov Chains based on word probability of a user-defined order.</p>
 <p>The agents then use these Markov Chain probabilities to construct new sentences, which they then treat as lyrics to a song.  Each agent creates their own set of &#8216;tools&#8217; which combined are called an &#8216;invention method&#8217;.  They then create music according to the instructions derived from their choice of invention method, other agents rate their results, and they apply this feedback to the tools used so they can be ranked by effectiveness.  Agents will continue to create new music every round, continually evaluating their individually unique methods and revising or discarding them based on the feedback received from their peers.</p>
+</div>
+<div class="section" id="installation-and-usage">
+<h1>Installation and Usage<a class="headerlink" href="#installation-and-usage" title="Permalink to this headline">¶</a></h1>
 <p>MFMC can be executed by installing <a class="reference external" href="https://packaging.python.org/installing/">Python 3.5</a>, using <a class="reference external" href="https://pypi.python.org/pypi/pip">pip</a> to <a class="reference external" href="https://docs.python.org/3/installing/">install</a> the following libraries:</p>
 <ul class="simple">
 <li><a class="reference external" href="http://www.nltk.org/">NLTK</a> <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">nltk</span></code></li>
@@ -52,7 +55,9 @@
 <li><a class="reference external" href="https://pypi.python.org/pypi/creamas/0.1.0">Creamas</a> <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">creamas</span></code></li>
 <li><a class="reference external" href="http://www.numpy.org/">NumPy</a> <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">numpy</span></code></li>
 </ul>
-<p>And then executing the mfmc.py file from the folder you have cloned MFMC to:</p>
+<p>Cloning the project to a local folder:</p>
+<p><code class="docutils literal"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">git&#64;github.com:cabrill/CCMAS16.git</span></code></p>
+<p>And then executing the mfmc.py file from the folder you have cloned MFMC to from Github:</p>
 <p><code class="docutils literal"><span class="pre">python</span> <span class="pre">mfmc.py</span></code></p>
 <p>All command line arguments are optional:</p>
 <div class="highlight-text"><div class="highlight"><pre><span></span>usage: mfmc.py [-h] [-a AGENTS] [-p PATH] [-o ORDER] [-r ROUNDS] [-m MEMORY]
@@ -92,6 +97,7 @@ optional arguments:
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Welcome to MFMC&#8217;s documentation</a></li>
+<li><a class="reference internal" href="#installation-and-usage">Installation and Usage</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 <div class="relations">

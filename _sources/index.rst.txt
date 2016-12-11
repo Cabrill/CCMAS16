@@ -5,9 +5,12 @@
 
 Welcome to MFMC's documentation
 ================================
-MFMC is an acronym that stands for 'MIDI From Multiple Contents' and represents a group project created by four students at the University of Helsinki.  This project is written entirely using Python 3.5, utilizes the `Creamas <https://pypi.python.org/pypi/creamas/0.1.0>`_ multi-agent library atop of aiomas, the `NLTK <http://www.nltk.org/>`_ language processing toolkit, and creates its MIDI files using the `Pyknon <https://github.com/kroger/pyknon>`_ library.  It supports creating a user-defined number of agents (default: 5)which are assigned reading material from the selection of TXT files placed in the ``InspiringSet`` subfolder.  After agents have sanitized the material, they will create Markov Chains based on word probability of a user-defined order (default: 1).
+MFMC is an acronym that stands for 'MIDI From Multiple Contents' and represents a group project created by four students at the University of Helsinki.  This project is written entirely using Python 3.5, utilizes the `Creamas <https://pypi.python.org/pypi/creamas/0.1.0>`_ multi-agent library atop of aiomas, the `NLTK <http://www.nltk.org/>`_ language processing toolkit, and creates its MIDI files using the `Pyknon <https://github.com/kroger/pyknon>`_ library.  It supports creating a user-defined number of agents which are assigned reading material from the selection of TXT files placed in the ``InspiringSet`` subfolder.  After agents have sanitized the material, they will create Markov Chains based on word probability of a user-defined order.
 
 The agents then use these Markov Chain probabilities to construct new sentences, which they then treat as lyrics to a song.  Each agent creates their own set of 'tools' which combined are called an 'invention method'.  They then create music according to the instructions derived from their choice of invention method, other agents rate their results, and they apply this feedback to the tools used so they can be ranked by effectiveness.  Agents will continue to create new music every round, continually evaluating their individually unique methods and revising or discarding them based on the feedback received from their peers.
+
+Installation and Usage
+======================
 
 MFMC can be executed by installing `Python 3.5 <https://packaging.python.org/installing/>`_, using `pip <https://pypi.python.org/pypi/pip>`_ to `install <https://docs.python.org/3/installing/>`_ the following libraries:
 
@@ -16,7 +19,11 @@ MFMC can be executed by installing `Python 3.5 <https://packaging.python.org/ins
 *   `Creamas <https://pypi.python.org/pypi/creamas/0.1.0>`_ ``pip install creamas``
 *   `NumPy <http://www.numpy.org/>`_ ``pip install numpy``
 
-And then executing the mfmc.py file from the folder you have cloned MFMC to:
+Cloning the project to a local folder:
+
+``git clone git@github.com:cabrill/CCMAS16.git``
+
+And then executing the mfmc.py file from the folder you have cloned MFMC to from Github:
 
 ``python mfmc.py``
 
