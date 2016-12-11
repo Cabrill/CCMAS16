@@ -21,6 +21,7 @@ And then executing the mfmc.py file from the folder you have cloned MFMC to:
 ``python mfmc.py``
 
 All command line arguments are optional:
+
 .. program-output:: python ../../CCMAS16/mfmc.py --help
 
 

@@ -54,8 +54,23 @@
 </ul>
 <p>And then executing the mfmc.py file from the folder you have cloned MFMC to:</p>
 <p><code class="docutils literal"><span class="pre">python</span> <span class="pre">mfmc.py</span></code></p>
-<p>All command line arguments are optional:
-.. program-output:: python ../../CCMAS16/mfmc.py &#8211;help</p>
+<p>All command line arguments are optional:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>usage: mfmc.py [-h] [-a AGENTS] [-p PATH] [-o ORDER] [-r ROUNDS] [-m MEMORY]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -a AGENTS, --agents AGENTS
+                        The number of concurrent agents to simulate.
+  -p PATH, --path PATH  The location of the inspiring set of TXT files.
+  -o ORDER, --order ORDER
+                        The order of Markov Chain to use in lyric generation.
+  -r ROUNDS, --rounds ROUNDS
+                        The number of voting rounds to simulate.
+  -m MEMORY, --memory MEMORY
+                        The number of previous artifacts an agent can
+                        remember.
+</pre></div>
+</div>
 <div class="toctree-wrapper compound">
 </div>
 </div>
