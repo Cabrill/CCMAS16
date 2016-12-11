@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to MFMC’s documentation &#8212; MFMC 1.0 documentation</title>
+    <title>Welcome to MFMC &#8212; MFMC 1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -41,8 +41,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="welcome-to-mfmc-s-documentation">
-<h1>Welcome to MFMC&#8217;s documentation<a class="headerlink" href="#welcome-to-mfmc-s-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="welcome-to-mfmc">
+<h1>Welcome to MFMC<a class="headerlink" href="#welcome-to-mfmc" title="Permalink to this headline">¶</a></h1>
 <p>MFMC is an acronym that stands for &#8216;MIDI From Multiple Contents&#8217; and represents a group project created by four students at the University of Helsinki.  This project is written entirely using Python 3.5, utilizes the <a class="reference external" href="https://pypi.python.org/pypi/creamas/0.1.0">Creamas</a> multi-agent library atop of aiomas, the <a class="reference external" href="http://www.nltk.org/">NLTK</a> language processing toolkit, and creates its MIDI files using the <a class="reference external" href="https://github.com/kroger/pyknon">Pyknon</a> library.  It supports creating a user-defined number of agents which are assigned reading material from the selection of TXT files placed in the <code class="docutils literal"><span class="pre">InspiringSet</span></code> subfolder.  After agents have sanitized the material, they will create Markov Chains based on word probability of a user-defined order.</p>
 <p>The agents then use these Markov Chain probabilities to construct new sentences, which they then treat as lyrics to a song.  Each agent creates their own set of &#8216;tools&#8217; which combined are called an &#8216;invention method&#8217;.  They then create music according to the instructions derived from their choice of invention method, other agents rate their results, and they apply this feedback to the tools used so they can be ranked by effectiveness.  Agents will continue to create new music every round, continually evaluating their individually unique methods and revising or discarding them based on the feedback received from their peers.</p>
 </div>
@@ -65,15 +65,18 @@
 optional arguments:
   -h, --help            show this help message and exit
   -a AGENTS, --agents AGENTS
-                        The number of concurrent agents to simulate.
+                        The number of concurrent agents to simulate. DEFAULT:
+                        5
   -p PATH, --path PATH  The location of the inspiring set of TXT files.
+                        DEFAULT: InspiringSet
   -o ORDER, --order ORDER
                         The order of Markov Chain to use in lyric generation.
+                        DEFAULT: 2
   -r ROUNDS, --rounds ROUNDS
-                        The number of voting rounds to simulate.
+                        The number of voting rounds to simulate. DEFAULT: 1000
   -m MEMORY, --memory MEMORY
-                        The number of previous artifacts an agent can
-                        remember.
+                        The number of seen artifacts an agent can remember.
+                        DEFAULT: 20
 </pre></div>
 </div>
 <div class="toctree-wrapper compound">
@@ -96,7 +99,7 @@ optional arguments:
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Welcome to MFMC&#8217;s documentation</a></li>
+<li><a class="reference internal" href="#">Welcome to MFMC</a></li>
 <li><a class="reference internal" href="#installation-and-usage">Installation and Usage</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
