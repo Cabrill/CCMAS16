@@ -58,7 +58,7 @@ class MusicAgent(CreativeAgent):
     '''
 
     def __init__(self, env, mcprobs, mcstates, helper, mem_len, service_addr, n=20,
-                 wlen_limits=(3,10), method_limits = 5):
+                 wlen_limits=(10,15), method_limits = 5):
         '''
         :param env:
             subclass of :py:class:`~creamas.core.environment.Environment`
@@ -161,47 +161,57 @@ class MusicAgent(CreativeAgent):
             score = 0
         return score
         
-    def value(self, artifact):
-        '''Evaluate given artifact with respect to the probability of it 
-        occurring using the state transition probabilities from the 
-        markov chain that the agent knows.
+    def evaluate(self, artifact):
+        '''Evaluate given artifact by checking its inherent value and novelty.
         
-        Actual evaluation formula for a string is:
-        
-        probability = 1 - likelihood where likelihood is the sum product of all tokens probability
-            according to this agents Markov Chain.
-            
-        length = Token length / maximum token length.  This favors longer artifacts.
-        
-        grammar = Simple grammar check, that invalidates an artifact if it fails.
-        
-        music = Evaluation of use of patterns and instrument choices
-       
         :param artifact: :class:`~creamas.core.Artifact` to be evaluated
         :returns:
             (evaluation, word)-tuple, containing both the evaluation and the
             evaluation method
         '''
-        probability = 1 - likelihood(artifact.obj[0], self.MarkovChainProbs)
-        length = len(nltk.word_tokenize(artifact.obj[0])) / (self.wlen_limits[1] * 4)
-        grammar = self.grammar_check(artifact)
-        music = self.eval_music(artifact)
-        evaluation = grammar * probability * length * music
-        return evaluation, "MarkovChainEvaluation"
+        lyric_eval = self.eval_lyrics(artifact)
+        music_eval = self.eval_music(artifact)
+        overall_eval = (lyric_eval + music_eval) / 2
+        
+        framing = {"Overall": overall_eval, 
+            "Lyric eval": lyric_eval,
+            "Music eval": music_eval}
+        
+        return overall_eval, framing
+        
+    def eval_lyrics(self, artifact):
+        '''Evaluates an artifact purely on the basis of the lyrics it contains, not paying attention to the music.
     
-    def novelty(self, artifact):
+        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated
+        :returns: double value from 0 to 1 representing the quality of music
+        '''
+        novelty = self.lyrics_novelty(artifact)
+        probability = 1 - likelihood(artifact.obj[0], self.MarkovChainProbs)
+        grammar = self.grammar_check(artifact)
+        
+        #Points for length diminishes as it increases, never passing 1
+        length = 0
+        len_val = 1
+        for word in nltk.word_tokenize(artifact.obj[0]):
+            len_val = len_val / 2
+            length = length + len_val
+
+        #Give increased value to length so that lyrics are not too short
+        evaluation = grammar * (probability + novelty + (length*5)) / 7
+        return evaluation
+        
+    def lyrics_novelty(self, artifact):
         '''Assign a value for the novelty of an artifact.  This value is based one
         the similarity of the artifact to previously recorded artifacts and
         therefore represents how unique the artifact is to this agent.   
         
         :param artifact: :class:`~creamas.core.Artifact` to be evaluated
         :returns:
-            (noveltyscore, method)-tuple, containing both the novelty score and the
-            method used to reach this score
+            the novelty score
         '''
         # We will choose that the novelty is maximal if agent's memory is empty.
         if len(self.mem.artifacts) == 0:
-            return 1.0, None
+            return 1.0
 
         novelty = 1.0
         evaluation_word = artifact.obj[0]
@@ -214,22 +224,8 @@ class MusicAgent(CreativeAgent):
             if current_novelty < novelty:
                 novelty = current_novelty
                 matching_word = word
-        return novelty, matching_word
-        
-    def evaluate(self, artifact):
-        '''Evaluate given artifact by checking its inherent value and novelty.
-        
-        :param artifact: :class:`~creamas.core.Artifact` to be evaluated
-        :returns:
-            (evaluation, word)-tuple, containing both the evaluation and the
-            evaluation method
-        '''
-        value, value_framing = self.value(artifact)
-        novelty, novelty_framing = self.novelty(artifact)
-        framing = {'value': value_framing, 'novelty':novelty_framing}
-        evaluation = (value + novelty) / 2
-        
-        return evaluation, framing
+                
+        return novelty
 
     def eval_music(self,artifact):
         '''Attempts to evaluate the quality of music by looking at instrument selection
@@ -287,7 +283,8 @@ class MusicAgent(CreativeAgent):
             inst_eval += 2
         else: #bad score for rhythm or lead sounds
             inst_eval -= 2
-
+            
+        inst_eval = max(0,inst_eval / 9) #Divide by max possible, with a floor of zero
 
         #evaluate melody
         def sanitize_track(artifact): #remove all not-note elements of the track_list in order to evaluate only the notes sequence
@@ -335,7 +332,7 @@ class MusicAgent(CreativeAgent):
         
         return eval_score
 
-    def generate(self):
+    def generate_lyrics(self):
         '''Generate new text.
 
         Text is generated by state transition probability of a markov chain. Text length is
@@ -343,21 +340,11 @@ class MusicAgent(CreativeAgent):
 
         :returns: a string of text wrapped as :class:`~creamas.core.artifact.Artifact`
         '''
-        lyrics = ""
-        for i in range(0,3):
-            text_length = random.randint(*self.wlen_limits)
-            lyrics = lyrics + " " + format_for_printing(generate(self.MarkovChainProbs, text_length))
-        lyrics = lyrics.strip()
-        
-        #Choose an invention method for the song and record its index for later evaluation
-        invention_method = self.choose_invention_method(lyrics)
-        method_used_idx = self.invention_methods.index(invention_method)
-        
-        #Create a word theme, music theme, and track_list
-        word_theme, music_theme, track_list = self.create_music(lyrics, invention_method)
-        
+        text_length = random.randint(*self.wlen_limits)
+        lyrics = generate(self.MarkovChainProbs, text_length)
+
         #Create an artifact containing the creations
-        tuple_artifact = (lyrics, word_theme, music_theme, track_list, method_used_idx)
+        tuple_artifact = (lyrics)
         
         return Artifact(self, tuple_artifact, domain=tuple)
         
@@ -439,8 +426,8 @@ class MusicAgent(CreativeAgent):
         #preferred invention method
         if len(other_notes) > 0:
             pattern_tracks = self.music_helper.derive_tracks_from_lyrics(lyrics, other_notes, lead_track_duration, invention_method.method_list)
-        for i in range(0, len(pattern_tracks)):
-            track_list.append(pattern_tracks[i])
+            for i in range(0, len(pattern_tracks)):
+                track_list.append(pattern_tracks[i])
                 
         #Find out which track came out the longest in duration
         longest_duration = lead_track_duration
@@ -563,9 +550,9 @@ class MusicAgent(CreativeAgent):
         return invention_method(method_list)
         
     def invent(self, n=10):
-        '''Invents a new sentence
+        '''Invents a new song
 
-        Generates multiple (n) words and selects the sentence with the highest rating.
+        Generates multiple words and selects the lyrics sentence with the highest rating.
 
         :param int n: Number of sentences to consider
         :returns:
@@ -576,19 +563,36 @@ class MusicAgent(CreativeAgent):
         # by recomputing the Markov Chain probabilities
         self.compute_probabilities()
         
-        best_artifact = self.generate()
-        max_evaluation, framing = self.evaluate(best_artifact)
-        for _ in range(n-1):
-            artifact = self.generate()
-            evaluation, fr = self.evaluate(artifact)
-            if evaluation > max_evaluation:
-                best_artifact = artifact
-                max_evaluation = evaluation
-                framing = fr
-
+        lyrics = ""
+        for i in range(0,3):
+            best_lyrics = self.generate_lyrics()
+            max_evaluation = self.eval_lyrics(best_lyrics)
+            for _ in range(n-1):
+                new_lyrics = self.generate_lyrics()
+                new_eval = self.eval_lyrics(new_lyrics)
+                if new_eval > max_evaluation:
+                    best_lyrics = new_lyrics
+                    max_evaluation = new_eval
+            lyrics = lyrics + " " + format_for_printing(best_lyrics.obj)
+        
+        #Remove any leading or trailing spaces
+        lyrics = lyrics.strip()
+        
+        #Choose an invention method for the song and record its index for later evaluation
+        invention_method = self.choose_invention_method(lyrics)
+        method_used_idx = self.invention_methods.index(invention_method)
+        
+        #Create a word theme, music theme, and track_list
+        word_theme, music_theme, track_list = self.create_music(lyrics, invention_method)
+        
+        #Create an artifact containing the creations
+        artifact = Artifact(self, (lyrics, word_theme, music_theme, track_list, method_used_idx), domain=tuple)
+        personal_eval, framing = self.evaluate(artifact)
+        
         # Add evaluation and framing to the artifact
-        best_artifact.add_eval(self, max_evaluation, fr=framing)
-        return best_artifact
+        artifact.add_eval(self, artifact, fr=framing)
+        
+        return artifact
 
     async def act(self):
         '''Agent acts by inventing new artifacts, considering methods, and learning from other examples
@@ -612,25 +616,25 @@ class MusicAgent(CreativeAgent):
         #for an opinion and to get one of their artifacts
         if not agent_address == self.addr:
             random_agent = await self.env.connect(agent_address)
-            their_opinion, requested_artifact = await random_agent.request_artifact_exchange(artifact)
+            their_opinion_lyrics, their_opinion_music, requested_artifact = await random_agent.request_artifact_exchange(artifact)
+            their_overall_opinion = (their_opinion_lyrics + their_opinion_music) / 2
+            
+            #Make an opinion on their artifact's lyrics
+            my_opinion = self.eval_lyrics(requested_artifact)
         
-            #Make an opinion on their artifact
-            my_opinion = self.value(requested_artifact)[0]
-        
-            #If this agent liked the returned artifact, then learn from it
+            #If this agent liked the returned artifact's lyrics, then learn from them
             if my_opinion > 0.85:
                 self.mem.memorize(requested_artifact)
                 self.learn(requested_artifact)
             
             #Read the invention method used from the artifact
             method_idx = artifact.obj[4]
-            self.record_feedback(method_idx, their_opinion)
-            
-            #Consider new methods of inventing music using these lyrics as inspiration 
-            self.reconsider_invention_methods(artifact.obj[0])
+            self.record_feedback(method_idx, their_opinion_music)
             
             #Also, if the other agent didn't like this one's artifact, try once more
-            if their_opinion < 0.85:
+            if their_overall_opinion < 0.85:
+                #Consider new methods of inventing music using these lyrics as inspiration 
+                self.reconsider_invention_methods(artifact.obj[0])
                 artifact = self.invent(self.n)
                 
         #Now give the environment the final artifact for voting
@@ -642,24 +646,25 @@ class MusicAgent(CreativeAgent):
         for their opinion on the artifact, and an artifact of their own.
         
         :param artifact sender_artifact: The artifact the sender wishes to be evaluated
-        :returns:  An opinion of received artifact, and an artifact for the requestor
+        :returns:  An opinion on the music of received artifact, and an artifact for the requestor
         '''
-        my_opinion = self.value(senders_artifact)[0]
+        my_opinion_of_lyrics = self.eval_lyrics(senders_artifact)
+        my_opinion_of_music = self.eval_music(senders_artifact)
         
         #Learn from this artifact if it's liked and return the favor
-        if my_opinion > 0.85:
+        if my_opinion_of_lyrics > 0.85:
             self.mem.memorize(senders_artifact)
             self.learn(senders_artifact)
-            my_artifact = self.generate()
+            my_artifact = self.invent()
         else:
             #If their artifact was not good, give them something random from memory
             #if one is available, and if it's not then create one.
             if len(self.mem.artifacts) > 0:
                 my_artifact = random.choice(self.mem.artifacts)
             else:
-                my_artifact = self.generate()
+                my_artifact = self.invent()
         
-        return my_opinion, my_artifact
+        return my_opinion_of_lyrics, my_opinion_of_music, my_artifact
     
     def record_feedback(self, method_idx, result):
         '''

@@ -111,7 +111,7 @@ def generate(state_transition_probabilities, length=10, start=None):
     order = determineOrder(state_transition_probabilities)
     # Calculate the order used by the state transition probabilities list
     maxOrder = [token.count(' ') for token in state_transition_probabilities.keys() if token.count(' ') > 0]
-
+    
     # If the list is empty (no spaces), order 1, otherwise it's 1+# of spaces
     if not maxOrder:
         order = 1
@@ -180,13 +180,13 @@ def format_for_printing(raw_text):
     formatted_string = raw_text
     formatted_string=formatted_string.replace(" .", ".")
     formatted_string=formatted_string.replace(" ,", ",")
-    formatted_string=replace_maintaining_case(formatted_string," n't", "n't")
-    formatted_string=replace_maintaining_case(formatted_string," 's", "'s")
-    formatted_string=replace_maintaining_case(formatted_string," 'll", "'ll")
-    formatted_string=replace_maintaining_case(formatted_string," 've", "'ve")
-    formatted_string=replace_maintaining_case(formatted_string," 're", "'re")
-    formatted_string=replace_maintaining_case(formatted_string," 'd", "'d")
-    formatted_string=replace_maintaining_case(formatted_string," 'm", "'m")
+    formatted_string=formatted_string.replace(" n't", "n't")
+    formatted_string=formatted_string.replace(" 's", "'s")
+    formatted_string=formatted_string.replace(" 'll", "'ll")
+    formatted_string=formatted_string.replace(" 've", "'ve")
+    formatted_string=formatted_string.replace(" 're", "'re")
+    formatted_string=formatted_string.replace(" 'd", "'d")
+    formatted_string=formatted_string.replace(" 'm", "'m")
     
     # Remove any trailing whitespace
     formatted_string = formatted_string.strip()
@@ -203,35 +203,6 @@ def format_for_printing(raw_text):
     
     return formatted_string
     
-def replace_maintaining_case(raw_text, find_text, replace_text):
-    '''
-    Takes raw text, and something to be replaced, but maintains the original_text
-    case of the letters being replaced
-    
-    :param string raw_text: The original text to have replacements occurrence
-    :param string find_text: The text to be found in the raw_text
-    :param string replace_text: The text that should replace the found text
-    :returns: The resulting text after replacement occurs
-    '''
-    return re.sub(find_text,
-             lambda m: replacement_func(m, replace_text),
-             raw_text, flags=re.I)
-             
-def replacement_func(match, repl_pattern):
-    '''
-    Function for replacing text, found on StackOverflow:
-    http://stackoverflow.com/questions/9208786/best-way-to-do-a-case-insensitive-replace-but-match-the-case-of-the-word-to-be-r
-    
-    :param string match: The matching text found
-    :param string repl_pattern: The text to be substituted
-    :returns: The resulting text after replacement occurs
-    '''
-    match_str = match.group(0)
-    repl = ''.join([r_char if m_char.islower() else r_char.upper()
-                   for r_char, m_char in zip(repl_pattern, match_str)])
-    repl += repl_pattern[len(match_str):]
-    return repl
-
 def markov_chain(raw_text, should_sanitize=True, order=1):
     '''
     Derive a model of state transition probabilities from supplied raw 
@@ -245,6 +216,15 @@ def markov_chain(raw_text, should_sanitize=True, order=1):
     # Replace more than one subsequent whitespace chars with one space
     raw_text = re.sub(r'\s+', ' ', raw_text)
     raw_text = re.sub(r'\t+', ' ', raw_text)
+    
+    # Replace unicode characters
+    raw_text = re.sub(u"\u201d", '"', raw_text)
+    raw_text = re.sub(u"\u201c", '"', raw_text)
+    raw_text = re.sub(u"\u2013", "-", raw_text)
+    raw_text = re.sub(u"\u2014", "--", raw_text)
+    raw_text = re.sub(u"\u2019", "'", raw_text)
+    raw_text = re.sub("\xe2\x80\x93", "-", raw_text)
+    raw_text = re.sub("_","", raw_text)
 
     # Tokenize the text into sentences.
     sentences = nltk.sent_tokenize(raw_text)
@@ -285,7 +265,6 @@ def markov_chain(raw_text, should_sanitize=True, order=1):
     totals = {}
     for pred, succ_counts in transitions.items():
         totals[pred] = sum(succ_counts.values())
-        #print(pred,totals[pred])
     
     # Compute the probability for each successor given the predecessor.
     probs = {}
