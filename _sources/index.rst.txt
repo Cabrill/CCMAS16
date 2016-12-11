@@ -9,6 +9,20 @@ MFMC is an acronym that stands for 'MIDI From Multiple Contents' and represents 
 
 The agents then use these Markov Chain probabilities to construct new sentences, which they then treat as lyrics to a song.  Each agent creates their own set of 'tools' which combined are called an 'invention method'.  They then create music according to the instructions derived from their choice of invention method, other agents rate their results, and they apply this feedback to the tools used so they can be ranked by effectiveness.  Agents will continue to create new music every round, continually evaluating their individually unique methods and revising or discarding them based on the feedback received from their peers.
 
+MFMC can be executed by installing `Python 3.5 <https://packaging.python.org/installing/>`_, using `pip <https://pypi.python.org/pypi/pip>`_ to `install <https://docs.python.org/3/installing/>`_ the following libraries:
+
+*   `NLTK <http://www.nltk.org/>`_ ``pip install nltk``
+*   `Pyknon <https://github.com/kroger/pyknon>`_ ``pip install pyknon``
+*   `Creamas <https://pypi.python.org/pypi/creamas/0.1.0>`_ ``pip install creamas``
+*   `NumPy <http://www.numpy.org/>`_ ``pip install numpy``
+
+And then executing the mfmc.py file from the folder you have cloned MFMC to:
+
+``python mfmc.py``
+
+All command line arguments are optional:
+.. program-output:: python ../../CCMAS16/mfmc.py --help
+
 
 .. toctree::
    :maxdepth: 2
