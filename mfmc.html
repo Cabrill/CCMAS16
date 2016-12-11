@@ -41,9 +41,25 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-mfmc">
-<span id="mfmc-module"></span><h1>mfmc module<a class="headerlink" href="#module-mfmc" title="Permalink to this headline">¶</a></h1>
-<p>MFMC(Music From Multiple Content) project to create music(lyrics+tracks) using multiple agents in a <a class="reference external" href="https://github.com/assamite/creamas/">creamas</a> environment and using the <a class="reference external" href="http://kroger.github.io/pyknon/">pyknon</a> library
+  <div class="section" id="mfmc-module">
+<h1>mfmc module<a class="headerlink" href="#mfmc-module" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-text"><div class="highlight"><pre><span></span>usage: mfmc.py [-h] [-a AGENTS] [-p PATH] [-o ORDER] [-r ROUNDS] [-m MEMORY]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -a AGENTS, --agents AGENTS
+                        The number of concurrent agents to simulate.
+  -p PATH, --path PATH  The location of the inspiring set of TXT files.
+  -o ORDER, --order ORDER
+                        The order of Markov Chain to use in lyric generation.
+  -r ROUNDS, --rounds ROUNDS
+                        The number of voting rounds to simulate.
+  -m MEMORY, --memory MEMORY
+                        The number of previous artifacts an agent can
+                        remember.
+</pre></div>
+</div>
+<span class="target" id="module-mfmc"></span><p>MFMC(Music From Multiple Content) project to create music(lyrics+tracks) using multiple agents in a <a class="reference external" href="https://github.com/assamite/creamas/">creamas</a> environment and using the <a class="reference external" href="http://kroger.github.io/pyknon/">pyknon</a> library
 to create MIDI files.</p>
 <dl class="class">
 <dt id="mfmc.MusicEnvironment">

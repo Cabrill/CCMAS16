@@ -102,7 +102,7 @@
 <span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">mcprobs</span><span class="p">,</span> <span class="n">mcstates</span><span class="p">,</span> <span class="n">helper</span><span class="p">,</span> <span class="n">mem_len</span><span class="p">,</span> <span class="n">service_addr</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-                 <span class="n">wlen_limits</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">method_limits</span> <span class="o">=</span> <span class="mi">5</span><span class="p">):</span>
+                 <span class="n">wlen_limits</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">15</span><span class="p">),</span> <span class="n">method_limits</span> <span class="o">=</span> <span class="mi">5</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        :param env:</span>
 <span class="sd">            subclass of :py:class:`~creamas.core.environment.Environment`</span>
@@ -205,47 +205,57 @@
             <span class="n">score</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="n">score</span></div>
         
-<div class="viewcode-block" id="MusicAgent.value"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.value">[docs]</a>    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Evaluate given artifact with respect to the probability of it </span>
-<span class="sd">        occurring using the state transition probabilities from the </span>
-<span class="sd">        markov chain that the agent knows.</span>
+<div class="viewcode-block" id="MusicAgent.evaluate"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Evaluate given artifact by checking its inherent value and novelty.</span>
 <span class="sd">        </span>
-<span class="sd">        Actual evaluation formula for a string is:</span>
-<span class="sd">        </span>
-<span class="sd">        probability = 1 - likelihood where likelihood is the sum product of all tokens probability</span>
-<span class="sd">            according to this agents Markov Chain.</span>
-<span class="sd">            </span>
-<span class="sd">        length = Token length / maximum token length.  This favors longer artifacts.</span>
-<span class="sd">        </span>
-<span class="sd">        grammar = Simple grammar check, that invalidates an artifact if it fails.</span>
-<span class="sd">        </span>
-<span class="sd">        music = Evaluation of use of patterns and instrument choices</span>
-<span class="sd">       </span>
 <span class="sd">        :param artifact: :class:`~creamas.core.Artifact` to be evaluated</span>
 <span class="sd">        :returns:</span>
 <span class="sd">            (evaluation, word)-tuple, containing both the evaluation and the</span>
 <span class="sd">            evaluation method</span>
 <span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">lyric_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_lyrics</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="n">music_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_music</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="n">overall_eval</span> <span class="o">=</span> <span class="p">(</span><span class="n">lyric_eval</span> <span class="o">+</span> <span class="n">music_eval</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        
+        <span class="n">framing</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Overall&quot;</span><span class="p">:</span> <span class="n">overall_eval</span><span class="p">,</span> 
+            <span class="s2">&quot;Lyric eval&quot;</span><span class="p">:</span> <span class="n">lyric_eval</span><span class="p">,</span>
+            <span class="s2">&quot;Music eval&quot;</span><span class="p">:</span> <span class="n">music_eval</span><span class="p">}</span>
+        
+        <span class="k">return</span> <span class="n">overall_eval</span><span class="p">,</span> <span class="n">framing</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.eval_lyrics"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_lyrics">[docs]</a>    <span class="k">def</span> <span class="nf">eval_lyrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Evaluates an artifact purely on the basis of the lyrics it contains, not paying attention to the music.</span>
+<span class="sd">    </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated</span>
+<span class="sd">        :returns: double value from 0 to 1 representing the quality of music</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">novelty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lyrics_novelty</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
         <span class="n">probability</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">likelihood</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">)</span>
-        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wlen_limits</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>
         <span class="n">grammar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grammar_check</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
-        <span class="n">music</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_music</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
-        <span class="n">evaluation</span> <span class="o">=</span> <span class="n">grammar</span> <span class="o">*</span> <span class="n">probability</span> <span class="o">*</span> <span class="n">length</span> <span class="o">*</span> <span class="n">music</span>
-        <span class="k">return</span> <span class="n">evaluation</span><span class="p">,</span> <span class="s2">&quot;MarkovChainEvaluation&quot;</span></div>
-    
-<div class="viewcode-block" id="MusicAgent.novelty"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.novelty">[docs]</a>    <span class="k">def</span> <span class="nf">novelty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        
+        <span class="c1">#Points for length diminishes as it increases, never passing 1</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">len_val</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">len_val</span> <span class="o">=</span> <span class="n">len_val</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="n">length</span> <span class="o">+</span> <span class="n">len_val</span>
+
+        <span class="c1">#Give increased value to length so that lyrics are not too short</span>
+        <span class="n">evaluation</span> <span class="o">=</span> <span class="n">grammar</span> <span class="o">*</span> <span class="p">(</span><span class="n">probability</span> <span class="o">+</span> <span class="n">novelty</span> <span class="o">+</span> <span class="p">(</span><span class="n">length</span><span class="o">*</span><span class="mi">5</span><span class="p">))</span> <span class="o">/</span> <span class="mi">7</span>
+        <span class="k">return</span> <span class="n">evaluation</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.lyrics_novelty"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.lyrics_novelty">[docs]</a>    <span class="k">def</span> <span class="nf">lyrics_novelty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Assign a value for the novelty of an artifact.  This value is based one</span>
 <span class="sd">        the similarity of the artifact to previously recorded artifacts and</span>
 <span class="sd">        therefore represents how unique the artifact is to this agent.   </span>
 <span class="sd">        </span>
 <span class="sd">        :param artifact: :class:`~creamas.core.Artifact` to be evaluated</span>
 <span class="sd">        :returns:</span>
-<span class="sd">            (noveltyscore, method)-tuple, containing both the novelty score and the</span>
-<span class="sd">            method used to reach this score</span>
+<span class="sd">            the novelty score</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="c1"># We will choose that the novelty is maximal if agent&#39;s memory is empty.</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mf">1.0</span><span class="p">,</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
 
         <span class="n">novelty</span> <span class="o">=</span> <span class="mf">1.0</span>
         <span class="n">evaluation_word</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -258,22 +268,8 @@
             <span class="k">if</span> <span class="n">current_novelty</span> <span class="o">&lt;</span> <span class="n">novelty</span><span class="p">:</span>
                 <span class="n">novelty</span> <span class="o">=</span> <span class="n">current_novelty</span>
                 <span class="n">matching_word</span> <span class="o">=</span> <span class="n">word</span>
-        <span class="k">return</span> <span class="n">novelty</span><span class="p">,</span> <span class="n">matching_word</span></div>
-        
-<div class="viewcode-block" id="MusicAgent.evaluate"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Evaluate given artifact by checking its inherent value and novelty.</span>
-<span class="sd">        </span>
-<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` to be evaluated</span>
-<span class="sd">        :returns:</span>
-<span class="sd">            (evaluation, word)-tuple, containing both the evaluation and the</span>
-<span class="sd">            evaluation method</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">value</span><span class="p">,</span> <span class="n">value_framing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
-        <span class="n">novelty</span><span class="p">,</span> <span class="n">novelty_framing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">novelty</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
-        <span class="n">framing</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">value_framing</span><span class="p">,</span> <span class="s1">&#39;novelty&#39;</span><span class="p">:</span><span class="n">novelty_framing</span><span class="p">}</span>
-        <span class="n">evaluation</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="o">+</span> <span class="n">novelty</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-        
-        <span class="k">return</span> <span class="n">evaluation</span><span class="p">,</span> <span class="n">framing</span></div>
+                
+        <span class="k">return</span> <span class="n">novelty</span></div>
 
 <div class="viewcode-block" id="MusicAgent.eval_music"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_music">[docs]</a>    <span class="k">def</span> <span class="nf">eval_music</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">artifact</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Attempts to evaluate the quality of music by looking at instrument selection</span>
@@ -331,7 +327,8 @@
             <span class="n">inst_eval</span> <span class="o">+=</span> <span class="mi">2</span>
         <span class="k">else</span><span class="p">:</span> <span class="c1">#bad score for rhythm or lead sounds</span>
             <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">2</span>
-
+            
+        <span class="n">inst_eval</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">inst_eval</span> <span class="o">/</span> <span class="mi">9</span><span class="p">)</span> <span class="c1">#Divide by max possible, with a floor of zero</span>
 
         <span class="c1">#evaluate melody</span>
         <span class="k">def</span> <span class="nf">sanitize_track</span><span class="p">(</span><span class="n">artifact</span><span class="p">):</span> <span class="c1">#remove all not-note elements of the track_list in order to evaluate only the notes sequence</span>
@@ -379,7 +376,7 @@
         
         <span class="k">return</span> <span class="n">eval_score</span></div>
 
-<div class="viewcode-block" id="MusicAgent.generate"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="MusicAgent.generate_lyrics"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.generate_lyrics">[docs]</a>    <span class="k">def</span> <span class="nf">generate_lyrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Generate new text.</span>
 
 <span class="sd">        Text is generated by state transition probability of a markov chain. Text length is</span>
@@ -387,21 +384,11 @@
 
 <span class="sd">        :returns: a string of text wrapped as :class:`~creamas.core.artifact.Artifact`</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">lyrics</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span>
-            <span class="n">text_length</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">wlen_limits</span><span class="p">)</span>
-            <span class="n">lyrics</span> <span class="o">=</span> <span class="n">lyrics</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">format_for_printing</span><span class="p">(</span><span class="n">generate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">,</span> <span class="n">text_length</span><span class="p">))</span>
-        <span class="n">lyrics</span> <span class="o">=</span> <span class="n">lyrics</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        
-        <span class="c1">#Choose an invention method for the song and record its index for later evaluation</span>
-        <span class="n">invention_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">choose_invention_method</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
-        <span class="n">method_used_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">invention_method</span><span class="p">)</span>
-        
-        <span class="c1">#Create a word theme, music theme, and track_list</span>
-        <span class="n">word_theme</span><span class="p">,</span> <span class="n">music_theme</span><span class="p">,</span> <span class="n">track_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_music</span><span class="p">(</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">invention_method</span><span class="p">)</span>
-        
+        <span class="n">text_length</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">wlen_limits</span><span class="p">)</span>
+        <span class="n">lyrics</span> <span class="o">=</span> <span class="n">generate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">,</span> <span class="n">text_length</span><span class="p">)</span>
+
         <span class="c1">#Create an artifact containing the creations</span>
-        <span class="n">tuple_artifact</span> <span class="o">=</span> <span class="p">(</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">word_theme</span><span class="p">,</span> <span class="n">music_theme</span><span class="p">,</span> <span class="n">track_list</span><span class="p">,</span> <span class="n">method_used_idx</span><span class="p">)</span>
+        <span class="n">tuple_artifact</span> <span class="o">=</span> <span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">Artifact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tuple_artifact</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="nb">tuple</span><span class="p">)</span></div>
         
@@ -483,8 +470,8 @@
         <span class="c1">#preferred invention method</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">other_notes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">pattern_tracks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">derive_tracks_from_lyrics</span><span class="p">(</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">other_notes</span><span class="p">,</span> <span class="n">lead_track_duration</span><span class="p">,</span> <span class="n">invention_method</span><span class="o">.</span><span class="n">method_list</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pattern_tracks</span><span class="p">)):</span>
-            <span class="n">track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pattern_tracks</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pattern_tracks</span><span class="p">)):</span>
+                <span class="n">track_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pattern_tracks</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
                 
         <span class="c1">#Find out which track came out the longest in duration</span>
         <span class="n">longest_duration</span> <span class="o">=</span> <span class="n">lead_track_duration</span>
@@ -607,9 +594,9 @@
         <span class="k">return</span> <span class="n">invention_method</span><span class="p">(</span><span class="n">method_list</span><span class="p">)</span></div>
         
 <div class="viewcode-block" id="MusicAgent.invent"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.invent">[docs]</a>    <span class="k">def</span> <span class="nf">invent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Invents a new sentence</span>
+        <span class="sd">&#39;&#39;&#39;Invents a new song</span>
 
-<span class="sd">        Generates multiple (n) words and selects the sentence with the highest rating.</span>
+<span class="sd">        Generates multiple words and selects the lyrics sentence with the highest rating.</span>
 
 <span class="sd">        :param int n: Number of sentences to consider</span>
 <span class="sd">        :returns:</span>
@@ -620,19 +607,36 @@
         <span class="c1"># by recomputing the Markov Chain probabilities</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compute_probabilities</span><span class="p">()</span>
         
-        <span class="n">best_artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
-        <span class="n">max_evaluation</span><span class="p">,</span> <span class="n">framing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">best_artifact</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-            <span class="n">artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
-            <span class="n">evaluation</span><span class="p">,</span> <span class="n">fr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">evaluation</span> <span class="o">&gt;</span> <span class="n">max_evaluation</span><span class="p">:</span>
-                <span class="n">best_artifact</span> <span class="o">=</span> <span class="n">artifact</span>
-                <span class="n">max_evaluation</span> <span class="o">=</span> <span class="n">evaluation</span>
-                <span class="n">framing</span> <span class="o">=</span> <span class="n">fr</span>
-
+        <span class="n">lyrics</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">best_lyrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_lyrics</span><span class="p">()</span>
+            <span class="n">max_evaluation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_lyrics</span><span class="p">(</span><span class="n">best_lyrics</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">new_lyrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_lyrics</span><span class="p">()</span>
+                <span class="n">new_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_lyrics</span><span class="p">(</span><span class="n">new_lyrics</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">new_eval</span> <span class="o">&gt;</span> <span class="n">max_evaluation</span><span class="p">:</span>
+                    <span class="n">best_lyrics</span> <span class="o">=</span> <span class="n">new_lyrics</span>
+                    <span class="n">max_evaluation</span> <span class="o">=</span> <span class="n">new_eval</span>
+            <span class="n">lyrics</span> <span class="o">=</span> <span class="n">lyrics</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">format_for_printing</span><span class="p">(</span><span class="n">best_lyrics</span><span class="o">.</span><span class="n">obj</span><span class="p">)</span>
+        
+        <span class="c1">#Remove any leading or trailing spaces</span>
+        <span class="n">lyrics</span> <span class="o">=</span> <span class="n">lyrics</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        
+        <span class="c1">#Choose an invention method for the song and record its index for later evaluation</span>
+        <span class="n">invention_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">choose_invention_method</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
+        <span class="n">method_used_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">invention_method</span><span class="p">)</span>
+        
+        <span class="c1">#Create a word theme, music theme, and track_list</span>
+        <span class="n">word_theme</span><span class="p">,</span> <span class="n">music_theme</span><span class="p">,</span> <span class="n">track_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_music</span><span class="p">(</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">invention_method</span><span class="p">)</span>
+        
+        <span class="c1">#Create an artifact containing the creations</span>
+        <span class="n">artifact</span> <span class="o">=</span> <span class="n">Artifact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">word_theme</span><span class="p">,</span> <span class="n">music_theme</span><span class="p">,</span> <span class="n">track_list</span><span class="p">,</span> <span class="n">method_used_idx</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="nb">tuple</span><span class="p">)</span>
+        <span class="n">personal_eval</span><span class="p">,</span> <span class="n">framing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        
         <span class="c1"># Add evaluation and framing to the artifact</span>
-        <span class="n">best_artifact</span><span class="o">.</span><span class="n">add_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_evaluation</span><span class="p">,</span> <span class="n">fr</span><span class="o">=</span><span class="n">framing</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">best_artifact</span></div>
+        <span class="n">artifact</span><span class="o">.</span><span class="n">add_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">,</span> <span class="n">fr</span><span class="o">=</span><span class="n">framing</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">artifact</span></div>
 
 <div class="viewcode-block" id="MusicAgent.act"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.act">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">act</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Agent acts by inventing new artifacts, considering methods, and learning from other examples</span>
@@ -656,25 +660,25 @@
         <span class="c1">#for an opinion and to get one of their artifacts</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">agent_address</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="p">:</span>
             <span class="n">random_agent</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">agent_address</span><span class="p">)</span>
-            <span class="n">their_opinion</span><span class="p">,</span> <span class="n">requested_artifact</span> <span class="o">=</span> <span class="k">await</span> <span class="n">random_agent</span><span class="o">.</span><span class="n">request_artifact_exchange</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+            <span class="n">their_opinion_lyrics</span><span class="p">,</span> <span class="n">their_opinion_music</span><span class="p">,</span> <span class="n">requested_artifact</span> <span class="o">=</span> <span class="k">await</span> <span class="n">random_agent</span><span class="o">.</span><span class="n">request_artifact_exchange</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+            <span class="n">their_overall_opinion</span> <span class="o">=</span> <span class="p">(</span><span class="n">their_opinion_lyrics</span> <span class="o">+</span> <span class="n">their_opinion_music</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+            
+            <span class="c1">#Make an opinion on their artifact&#39;s lyrics</span>
+            <span class="n">my_opinion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_lyrics</span><span class="p">(</span><span class="n">requested_artifact</span><span class="p">)</span>
         
-            <span class="c1">#Make an opinion on their artifact</span>
-            <span class="n">my_opinion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">requested_artifact</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        
-            <span class="c1">#If this agent liked the returned artifact, then learn from it</span>
+            <span class="c1">#If this agent liked the returned artifact&#39;s lyrics, then learn from them</span>
             <span class="k">if</span> <span class="n">my_opinion</span> <span class="o">&gt;</span> <span class="mf">0.85</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">memorize</span><span class="p">(</span><span class="n">requested_artifact</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">learn</span><span class="p">(</span><span class="n">requested_artifact</span><span class="p">)</span>
             
             <span class="c1">#Read the invention method used from the artifact</span>
             <span class="n">method_idx</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">record_feedback</span><span class="p">(</span><span class="n">method_idx</span><span class="p">,</span> <span class="n">their_opinion</span><span class="p">)</span>
-            
-            <span class="c1">#Consider new methods of inventing music using these lyrics as inspiration </span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">reconsider_invention_methods</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">record_feedback</span><span class="p">(</span><span class="n">method_idx</span><span class="p">,</span> <span class="n">their_opinion_music</span><span class="p">)</span>
             
             <span class="c1">#Also, if the other agent didn&#39;t like this one&#39;s artifact, try once more</span>
-            <span class="k">if</span> <span class="n">their_opinion</span> <span class="o">&lt;</span> <span class="mf">0.85</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">their_overall_opinion</span> <span class="o">&lt;</span> <span class="mf">0.85</span><span class="p">:</span>
+                <span class="c1">#Consider new methods of inventing music using these lyrics as inspiration </span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reconsider_invention_methods</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
                 <span class="n">artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
                 
         <span class="c1">#Now give the environment the final artifact for voting</span>
@@ -686,24 +690,25 @@
 <span class="sd">        for their opinion on the artifact, and an artifact of their own.</span>
 <span class="sd">        </span>
 <span class="sd">        :param artifact sender_artifact: The artifact the sender wishes to be evaluated</span>
-<span class="sd">        :returns:  An opinion of received artifact, and an artifact for the requestor</span>
+<span class="sd">        :returns:  An opinion on the music of received artifact, and an artifact for the requestor</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">my_opinion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">senders_artifact</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">my_opinion_of_lyrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_lyrics</span><span class="p">(</span><span class="n">senders_artifact</span><span class="p">)</span>
+        <span class="n">my_opinion_of_music</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_music</span><span class="p">(</span><span class="n">senders_artifact</span><span class="p">)</span>
         
         <span class="c1">#Learn from this artifact if it&#39;s liked and return the favor</span>
-        <span class="k">if</span> <span class="n">my_opinion</span> <span class="o">&gt;</span> <span class="mf">0.85</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">my_opinion_of_lyrics</span> <span class="o">&gt;</span> <span class="mf">0.85</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">memorize</span><span class="p">(</span><span class="n">senders_artifact</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">learn</span><span class="p">(</span><span class="n">senders_artifact</span><span class="p">)</span>
-            <span class="n">my_artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
+            <span class="n">my_artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invent</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1">#If their artifact was not good, give them something random from memory</span>
             <span class="c1">#if one is available, and if it&#39;s not then create one.</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">my_artifact</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">my_artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
+                <span class="n">my_artifact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invent</span><span class="p">()</span>
         
-        <span class="k">return</span> <span class="n">my_opinion</span><span class="p">,</span> <span class="n">my_artifact</span></div>
+        <span class="k">return</span> <span class="n">my_opinion_of_lyrics</span><span class="p">,</span> <span class="n">my_opinion_of_music</span><span class="p">,</span> <span class="n">my_artifact</span></div>
     
 <div class="viewcode-block" id="MusicAgent.record_feedback"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.record_feedback">[docs]</a>    <span class="k">def</span> <span class="nf">record_feedback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_idx</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>

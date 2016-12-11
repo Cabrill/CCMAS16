@@ -152,51 +152,6 @@ text, after sanitizing the text, unless specified not to.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="mc.replace_maintaining_case">
-<code class="descclassname">mc.</code><code class="descname">replace_maintaining_case</code><span class="sig-paren">(</span><em>raw_text</em>, <em>find_text</em>, <em>replace_text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#replace_maintaining_case"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.replace_maintaining_case" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes raw text, and something to be replaced, but maintains the original_text
-case of the letters being replaced</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>raw_text</strong> (<em>string</em>) &#8211; The original text to have replacements occurrence</li>
-<li><strong>find_text</strong> (<em>string</em>) &#8211; The text to be found in the raw_text</li>
-<li><strong>replace_text</strong> (<em>string</em>) &#8211; The text that should replace the found text</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The resulting text after replacement occurs</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="mc.replacement_func">
-<code class="descclassname">mc.</code><code class="descname">replacement_func</code><span class="sig-paren">(</span><em>match</em>, <em>repl_pattern</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#replacement_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.replacement_func" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function for replacing text, found on StackOverflow:
-<a class="reference external" href="http://stackoverflow.com/questions/9208786/best-way-to-do-a-case-insensitive-replace-but-match-the-case-of-the-word-to-be-r">http://stackoverflow.com/questions/9208786/best-way-to-do-a-case-insensitive-replace-but-match-the-case-of-the-word-to-be-r</a></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>match</strong> (<em>string</em>) &#8211; The matching text found</li>
-<li><strong>repl_pattern</strong> (<em>string</em>) &#8211; The text to be substituted</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The resulting text after replacement occurs</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
 <dt id="mc.sanitize">
 <code class="descclassname">mc.</code><code class="descname">sanitize</code><span class="sig-paren">(</span><em>token_list</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mc.html#sanitize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mc.sanitize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sanitizes a token list by only accepting valid words,

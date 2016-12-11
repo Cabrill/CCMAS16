@@ -1,7 +1,9 @@
 mfmc module
 ===========
+.. program-output:: python ../../CCMAS16/mfmc.py --help
 
 .. automodule:: mfmc
     :members:
     :undoc-members:
     :show-inheritance:
+
