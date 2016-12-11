@@ -3,6 +3,7 @@ MFMC(Music From Multiple Content) project to create music(lyrics+tracks) using m
 to create MIDI files.
 '''
 import logging,random,numpy,re,string,aiomas,nltk,os,subprocess, platform
+import argparse
 from os import listdir
 from os.path import isfile, join
 from collections import Counter
@@ -139,16 +140,47 @@ def read_text(self, mypath="InspiringSet/"):
     text_files = [f  for f in listdir(mypath) if isfile(join(mypath, f)) and str(f).endswith(".txt")]
     return text_files
     
-if __name__ == "__main__":
-    logger.info("Initializing environment and agent data...")
+if __name__ == "__main__":  
+    #Read in any supplied user arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-a", "--agents", help="The number of concurrent agents to simulate.", type=int)
+    parser.add_argument("-p", "--path", help="The location of the inspiring set of TXT files.", type=str)
+    parser.add_argument("-o", "--order", help="The order of Markov Chain to use in lyric generation.", type=str)
+    parser.add_argument("-r", "--rounds", help="The number of voting rounds to simulate.", type=int)
+    parser.add_argument("-m", "--memory", help="The number of previous artifacts an agent can remember.", type=int)
+    args = parser.parse_args()
     
     #Set Inspiring Set path (location of TXT files)
-    path = "InspiringSet/"
+    if args.path:
+        path = args.path
+    else:
+        path = "InspiringSet/"
     
-    #Set the memory length and voting rounds
-    list_memory = 25
-    voting_rounds = 1000
-    num_agents = 5
+    #Set the number of agents
+    if args.agents:
+        num_agents = args.agents
+    else:
+        num_agents = 5
+        
+    #Set the Markov Chain order
+    if args.order:
+        order = args.order
+    else:
+        order = 2
+    
+    #Set the memory list length
+    if args.memory:
+        list_memory = memory
+    else:
+        list_memory = 20
+        
+    #Set the number of rounds
+    if args.rounds:
+        voting_rounds = args.rounds
+    else:
+        voting_rounds = 1000
+        
+    logger.info("Initializing environment and agent data...")
     
     #Create the simulation environment
     env = MusicEnvironment.create(('localhost', 5555), codec=aiomas.MsgPack, extra_serializers=[get_artifact_ser])
@@ -178,7 +210,7 @@ if __name__ == "__main__":
             #Read the text data
             text_read = getTextFromFile(fqpn)
             #Learn the Markov Chains from the text
-            textmc, textst = markov_chain(text_read)
+            textmc, textst = markov_chain(text_read, order)
             
             for i in range(0, agents_per_text):
                 if len(env.get_agents()) < num_agents:
