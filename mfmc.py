@@ -143,11 +143,11 @@ def read_text(self, mypath="InspiringSet/"):
 if __name__ == "__main__":  
     #Read in any supplied user arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--agents", help="The number of concurrent agents to simulate.", type=int)
-    parser.add_argument("-p", "--path", help="The location of the inspiring set of TXT files.", type=str)
-    parser.add_argument("-o", "--order", help="The order of Markov Chain to use in lyric generation.", type=str)
-    parser.add_argument("-r", "--rounds", help="The number of voting rounds to simulate.", type=int)
-    parser.add_argument("-m", "--memory", help="The number of previous artifacts an agent can remember.", type=int)
+    parser.add_argument("-a", "--agents", help="The number of concurrent agents to simulate.  DEFAULT: 5", type=int)
+    parser.add_argument("-p", "--path", help="The location of the inspiring set of TXT files. DEFAULT: InspiringSet", type=str)
+    parser.add_argument("-o", "--order", help="The order of Markov Chain to use in lyric generation.  DEFAULT: 2", type=str)
+    parser.add_argument("-r", "--rounds", help="The number of voting rounds to simulate.  DEFAULT: 1000", type=int)
+    parser.add_argument("-m", "--memory", help="The number of seen artifacts an agent can remember.  DEFAULT: 20", type=int)
     args = parser.parse_args()
     
     #Set Inspiring Set path (location of TXT files)
