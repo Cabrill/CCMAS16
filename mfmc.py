@@ -212,7 +212,7 @@ if __name__ == "__main__":
             #Read the text data
             text_read = getTextFromFile(fqpn)
             #Learn the Markov Chains from the text
-            textmc, textst = markov_chain(text_read, order)
+            textmc, textst = markov_chain(text_read, True, order)
             
             for i in range(0, agents_per_text):
                 if len(env.get_agents()) < num_agents:

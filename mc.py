@@ -109,14 +109,6 @@ def generate(state_transition_probabilities, length=10, start=None):
     :returns:  The new text that has been generated
     '''
     order = determineOrder(state_transition_probabilities)
-    # Calculate the order used by the state transition probabilities list
-    maxOrder = [token.count(' ') for token in state_transition_probabilities.keys() if token.count(' ') > 0]
-    
-    # If the list is empty (no spaces), order 1, otherwise it's 1+# of spaces
-    if not maxOrder:
-        order = 1
-    else:
-        order = max(maxOrder) + 1
 
     if start == None:
         is_word = re.compile('\w')

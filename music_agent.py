@@ -106,21 +106,32 @@ class MusicAgent(CreativeAgent):
         
         :param artifact: :class:`~creamas.core.Artifact` to be evaluated
         '''
-        raw_text = artifact.obj[0]
-        
-        # Tokenize the text into words
-        tokenized_words = nltk.word_tokenize(raw_text)
+        raw_text = artifact.obj[0].replace(".", "")
+                    
+        # Tokenize the text into sentences.
+        sentences = nltk.sent_tokenize(raw_text)
+
+        # Tokenize each sentence to words. Each item in 'words' is a list with
+        # tokenized words from that list.
+        tokenized_sentences = []
+        for s in sentences:
+            w = nltk.word_tokenize(s)
+            tokenized_sentences.append(w)
+
+        # Sanitize the tokens of each sentence
+        tokenized_sentences = [sanitize(sentence) for sentence in tokenized_sentences]
         
         # Use the same order as existing learned Markov Chain
         order = self.mcpOrder
-        
+
         # Now we are ready to create the state transitions
-        for data in enumerate(tokenized_words):
+        for data in enumerate(tokenized_sentences):
             for i in range(len(data[1])-order):
                 pred = data[1][i]
                 for j in range(1, order):
                     pred += " " + data[1][i+j]
                 succ = data[1][i+order]
+
                 if pred not in self.MarkovChainStates:
                     # Predecessor key is not yet in the outer dictionary, so we create
                     # a new dictionary for it.
@@ -556,9 +567,8 @@ class MusicAgent(CreativeAgent):
                 if invention_method.average_rating >= lyric_seed:
                     best_method = invention_method
                     break
-            #If no method chosen based on the lyrics, choose the highest ranked one 
+            #If no method chosen based on the lyrics, create a new one or choose the highest ranked one 
             if not best_method:
-                best_method = self.invention_methods[0]
                 if len(self.invention_methods) < self.method_limit:
                     best_method = self.create_an_invention_method(lyrics)
                     self.invention_methods.append(best_method)
@@ -607,6 +617,19 @@ class MusicAgent(CreativeAgent):
             method_list.append(new_method)
         
         return invention_method(method_list)
+        
+    def replace_invention_method(self, new_method):
+        '''Allows an agent to replace one of their invention methods with a new one
+        
+        :param invention_method new_method:  The new invention method to be added to agent's methods
+        '''
+        self.invention_methods.sort(key=lambda method_list: method_list.average_rating, reverse=True)
+        
+        #Remove the worst performing invention method, if necessary
+        if len(self.invention_methods) == self.method_limit:
+            del self.invention_methods[-1]
+            
+        self.invention_methods.append(new_method)
         
     def invent(self, n=10):
         '''Invents a new song
@@ -679,10 +702,11 @@ class MusicAgent(CreativeAgent):
             their_overall_opinion = (their_opinion_lyrics + their_opinion_music) / 2
             
             #Make an opinion on their artifact's lyrics
-            my_opinion = self.eval_lyrics(requested_artifact)
+            my_opinion_lyrics = self.eval_lyrics(requested_artifact)
+            my_opinion_music = self.eval_music(requested_artifact)
         
             #If this agent liked the returned artifact's lyrics, then learn from them
-            if my_opinion > 0.85:
+            if my_opinion_lyrics > 0.85:
                 self.mem.memorize(requested_artifact)
                 self.learn(requested_artifact)
             
@@ -695,6 +719,12 @@ class MusicAgent(CreativeAgent):
                 #Consider new methods of inventing music using these lyrics as inspiration 
                 self.reconsider_invention_methods(artifact.obj[0])
                 artifact = self.invent(self.n)
+                                                
+                #if this agent like the returned artifact's music, ask for their invention method
+                if my_opinion_music > 0.8:
+                    new_method = await random_agent.request_invention_method(artifact)
+                    if new_method:
+                        self.replace_invention_method(new_method)
                 
         #Now give the environment the final artifact for voting
         self.env.add_candidate(artifact)
@@ -724,7 +754,34 @@ class MusicAgent(CreativeAgent):
                 my_artifact = self.invent()
         
         return my_opinion_of_lyrics, my_opinion_of_music, my_artifact
-    
+
+    @aiomas.expose
+    async def request_invention_method(self, senders_artifact):
+        '''Allows an agent to request they share their best invention method with
+        them.
+        
+        :param artifact sender_artifact: An artifact from the sender as a gift
+        :returns:  The agents invention method they wish to share
+        '''
+        shared_invention_method = None
+        my_opinion_of_music = self.eval_music(senders_artifact)
+        
+        #Sort invention methods so the best are at the top
+        self.invention_methods.sort(key=lambda method_list: method_list.average_rating, reverse=True)
+        
+        shareable_methods = [method for method in self.invention_methods if method.times_utilized >= 5]
+        
+        #Only consider sharing if any have been used enough to warrant sharing
+        if len(shareable_methods) > 0:
+            #Not a very good artifact, sender needs all the help they can get
+            if my_opinion_of_music < 0.6:
+                shared_invention_method = shareable_methods[0]
+            else:
+                shared_invention_method = shareable_methods[-1]
+                
+        return shared_invention_method
+        
+        
     def record_feedback(self, method_idx, result):
         '''
         Allows an agent to be notified of feedback results so it can score its own
