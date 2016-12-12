@@ -275,7 +275,8 @@ class MusicAgent(CreativeAgent):
         melody_eval = self.eval_music_melody(artifact)
         harmony_eval = self.eval_music_harmony(artifact)
 
-        eval_score = (melody_eval + instrument_eval + harmony_eval) / 3
+        #Give higher weight to instrument choice and harmony than to melody
+        eval_score = (melody_eval + instrument_eval*3 + harmony_eval*2) / 6
         
         return eval_score
         
@@ -439,16 +440,22 @@ class MusicAgent(CreativeAgent):
         
         #Find a word that will provide a theme for the song
         music_theme = None
+        '''
         for i in range(0, len(lyric_words)):
             if music_theme != None:
                 break
             word_theme = lyric_words[i]
             if len(word_theme) > 2:
                 music_theme = self.music_helper.determine_theme(word_theme)
+                '''
         #No matching words were found, choose one at random
         if music_theme == None:
-            word_theme = "random"
-            music_theme = self.music_helper.determine_theme(word_theme)
+            word_theme = random.choice([word for word in lyric_words if len(word) > 4])
+            tempo = max(120,invention_method.method_list[0](lyrics) * invention_method.method_list[4](lyrics) % 600)
+            instr1 = (invention_method.method_list[0](lyrics) * invention_method.method_list[3](lyrics)) % 127
+            instr2 = (invention_method.method_list[1](lyrics) * invention_method.method_list[2](lyrics)) % 127
+            instr3 = (invention_method.method_list[4](lyrics) * invention_method.method_list[0](lyrics)) % 127
+            music_theme = (tempo, [instr1, instr2, instr3])
 
         track_list = []
         lead_track = NoteSeq()
@@ -597,25 +604,25 @@ class MusicAgent(CreativeAgent):
             lyric_sample = ' '.join(lyrics_tokens[lyric_index:lyric_index+self.mcpOrder+1])
             lyric_seed = 1 - likelihood(lyric_sample, self.MarkovChainProbs)
             if lyric_seed >= 0.9:
-                new_method = lambda text: max(1,len(text) % (method_ref+5))
+                new_method = lambda text: max(1,len(text) % ((method_ref+1)*5))
             elif lyric_seed >= 0.8:
-                new_method = lambda text: max(1,ord(text[0]) % (43+method_ref))
+                new_method = lambda text: max(1,ord(text[0]) % (1+(43*method_ref)))
             elif lyric_seed >= 0.7:
-                new_method = lambda text: max(1,ord(text[-1]) % (43+method_ref))
+                new_method = lambda text: max(1,ord(text[-1]) % (1+(43*method_ref)))
             elif lyric_seed >= 0.6:
-                new_method = lambda text: max(1,ord(text[0]) + ord(text[-1]) % (method_ref+43))
+                new_method = lambda text: max(1,ord(text[0]) + ord(text[-1]) % (1+(43*method_ref)))
             elif lyric_seed >= 0.5:
-                new_method = lambda text: max(1,len(text) % max(3,(ord(text[0])%43)))
+                new_method = lambda text: max(1,len(text) % max(3,(ord(text[0])%(1+(43*method_ref)))))
             elif lyric_seed >= 0.4:
-                new_method = lambda text: max(1,sum([ord(c) for c in text]) % (43+method_ref))
+                new_method = lambda text: max(1,sum([ord(c) for c in text]) % (1+(43*method_ref)))
             elif lyric_seed >= 0.3:
-                new_method = lambda text: max(1,abs(ord(text[0])-ord(text[1]) % (method_ref+5)))
+                new_method = lambda text: max(1,abs(ord(text[0])-ord(text[1]) % ((method_ref+1)*5)))
             elif lyric_seed >= 0.2:
-                new_method = lambda text: max(1,abs(ord(text[0])-ord(text[-1]) % (method_ref+5)))
+                new_method = lambda text: max(1,abs(ord(text[0])-ord(text[-1]) % ((method_ref+1)*5)))
             elif lyric_seed >= 0.1:
-                new_method = lambda text: max(1,abs(len(text)% abs(ord(text[0])-43) - method_ref))
+                new_method = lambda text: max(1,abs(len(text)% 1 + abs(ord(text[0])- 43 - method_ref)))
             else:
-                new_method = lambda text: max(1,abs(len(text)% abs(ord(text[-1])-43) - method_ref))
+                new_method = lambda text: max(1,abs(len(text)% 1 + abs(ord(text[-1])-43- method_ref)))
         
             method_list.append(new_method)
             name = name + lyric_sample[0] + "{0:.3f}".format(lyric_seed) + lyric_sample[-1]
@@ -768,19 +775,18 @@ class MusicAgent(CreativeAgent):
         :returns:  The agents invention method they wish to share
         '''
         shared_invention_method = None
-        my_opinion_of_music = self.eval_music(senders_artifact)
-        
-        #Sort invention methods so the best are at the top
-        self.invention_methods.sort(key=lambda method_list: method_list.average_rating, reverse=True)
-        
         shareable_methods = [method for method in self.invention_methods if method.times_utilized >= 5]
         
         #Only consider sharing if any have been used enough to warrant sharing
         if len(shareable_methods) > 0:
+            #Sort invention methods so the best are at the top
+            shareable_methods = shareable_methods.sort(key=lambda method_list: method_list.average_rating, reverse=True)
+            
+            my_opinion_of_music = self.eval_music(senders_artifact)
             #Not a very good artifact, sender needs all the help they can get
             if my_opinion_of_music < 0.6:
                 shared_invention_method = shareable_methods[0]
-            else:
+            else:#Give them the agent's worst method, to humor them
                 shared_invention_method = shareable_methods[-1]
                 
         return shared_invention_method

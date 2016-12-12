@@ -200,33 +200,32 @@ class MusicHelper:
             #Every other track picks a pattern length differently
             #but all tracks use the agent's invention methods
             if i % 2 == 0:
-                pattern_length = method[0](lyric_sentence)
-                pattern_accent = method[1](lyric_sentence)
-                accent_occur = method[2](lyric_sentence)
-                inversion_accent = method[3](lyric_sentence)
-                inversion_occur = method[4](lyric_sentence) 
+                pattern_length = max(3,method[0](lyric_sentence) % 8)
+                pattern_accent = method[1](lyric_sentence) % 3
+                accent_occur = max(1,method[2](lyric_sentence) % 12)
+                inversion_accent = method[3](lyric_sentence) % 6
+                inversion_occur = max(1,method[4](lyric_sentence) % 10)
                 #Aim to start shortly before the lead track
-                target_duration = track_duration * 1.2
+                target_duration = track_duration * 1.05
                 note_vol = 85
             else:
-                pattern_length = method[4](lyric_sentence)
-                pattern_accent = method[3](lyric_sentence)
-                accent_occur = method[2](lyric_sentence)
-                inversion_accent = method[1](lyric_sentence) 
-                inversion_occur = method[0](lyric_sentence)
+                pattern_length = max(3,method[4](lyric_sentence) % 12)
+                pattern_accent = method[3](lyric_sentence) % 3
+                accent_occur = max(1,method[2](lyric_sentence) % 16)
+                inversion_accent = method[1](lyric_sentence) % 5
+                inversion_occur = max(1,method[0](lyric_sentence) % 8)
                 #Aim for a lead-in before the other tracks
-                target_duration = track_duration * 1.3
+                target_duration = track_duration * 1.1
                 note_vol = 80
 
             #Give notes equal time, in accordance with represented word length, plus time for rests
-            duration_unit = (target_duration / (num_words  * num_chars_total)) - num_words
+            duration_unit = (target_duration / (num_words  * pattern_length * num_chars_total)) - num_words
             
             #Repeat the pattern equal to the number of words in the sentence
             this_track = NoteSeq()
             for n in range(0, num_words):
                 for m in range(0, pattern_length):                    
                     note_to_append = m % num_notes
-                    duration_count = m % list_of_char_counts[n]
                     note = notes[note_to_append]
                     note.volume = note_vol
                     
@@ -234,6 +233,7 @@ class MusicHelper:
                     if n % inversion_occur == 2:
                         note = note.inversion(inversion_accent)
                     
+                    duration_count = max(1,m % list_of_char_counts[n])
                     note.duration = duration_count * duration_unit
                     #Transpose this note, if the invention method calls for it
                     if m % accent_occur == 3:
