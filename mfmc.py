@@ -67,6 +67,7 @@ class MusicEnvironment(Environment):
             logger.info("Winning song created by: {} \nLyrics:{} \nTheme based on: {} \n(val={})"
                         .format(accepted.creator, lyrics, theme, accepted_value))
             logger.info("Creator's eval: " + str(accepted_framing))
+            logger.info("Invention method name: " + accepted.obj[4])
             logger.info("Tempo: " + str(accepted.obj[2][0]))
             logger.info("Tracks: "+ str(len(accepted.obj[3])))
             instr1 = MusicHelper.determine_instrument(accepted.obj[2][1][0])

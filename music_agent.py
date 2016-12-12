@@ -42,13 +42,14 @@ class invention_method:
     A list of functions used to generate parameters in the creation of music, 
     and minimal statistics about the overall invention method
     '''
-    def __init__(self, method_list):
+    def __init__(self, method_list, name):
         '''        
         :param list method_list: A list of methods accepting a string, used for invention
         '''
         self.times_utilized = 0
         self.average_rating = 1
         self.method_list = method_list
+        self.name = name
 
 class MusicAgent(CreativeAgent):
     '''An agent that creates music in the form of lyrics and instrument tracks.
@@ -559,7 +560,8 @@ class MusicAgent(CreativeAgent):
         else:
             #Otherwise, choose the best one from those available, using the lyrics as a seed for decision
             lyrics_tokens = nltk.word_tokenize(lyrics)
-            lyric_sample = ' '.join(lyrics_tokens[0:1])
+            #Use the probability of a sample of the lyrics as a seed for creation
+            lyric_sample = ' '.join(lyrics_tokens[0:self.mcpOrder+1])
             lyric_seed = 1 - likelihood(lyric_sample, self.MarkovChainProbs)
             best_method = None
             self.invention_methods.sort(key=lambda method_list: method_list.average_rating, reverse=True)
@@ -583,16 +585,17 @@ class MusicAgent(CreativeAgent):
         :param lyrics: string to be used for generation of a new method, if necessary
         :returns: A list of invention_methods.
         '''
+        name = ""
         method_list = []
         lyrics_tokens = nltk.word_tokenize(lyrics)
         token_len = len(lyrics_tokens)
         #Create five methods used to derive values used in music generation
         for method_ref in range(0, 5):
+            #Prevent a high order from causing an out-of-index on the lyrics
+            lyric_index = min(method_ref, token_len-method_ref-self.mcpOrder-2)
             #Use the probability of a sample of the lyrics as a seed for creation
-            lyric_index = min(token_len-2, method_ref % (token_len-1))
-            lyric_sample = ' '.join(lyrics_tokens[lyric_index:lyric_index+1])
+            lyric_sample = ' '.join(lyrics_tokens[lyric_index:lyric_index+self.mcpOrder+1])
             lyric_seed = 1 - likelihood(lyric_sample, self.MarkovChainProbs)
-            
             if lyric_seed >= 0.9:
                 new_method = lambda text: max(1,len(text) % (method_ref+5))
             elif lyric_seed >= 0.8:
@@ -615,8 +618,9 @@ class MusicAgent(CreativeAgent):
                 new_method = lambda text: max(1,abs(len(text)% abs(ord(text[-1])-43) - method_ref))
         
             method_list.append(new_method)
+            name = name + lyric_sample[0] + "{0:.3f}".format(lyric_seed) + lyric_sample[-1]
         
-        return invention_method(method_list)
+        return invention_method(method_list, name)
         
     def replace_invention_method(self, new_method):
         '''Allows an agent to replace one of their invention methods with a new one
@@ -662,13 +666,13 @@ class MusicAgent(CreativeAgent):
         
         #Choose an invention method for the song and record its index for later evaluation
         invention_method = self.choose_invention_method(lyrics)
-        method_used_idx = self.invention_methods.index(invention_method)
+        method_name = invention_method.name
         
         #Create a word theme, music theme, and track_list
         word_theme, music_theme, track_list = self.create_music(lyrics, invention_method)
         
         #Create an artifact containing the creations
-        artifact = Artifact(self, (lyrics, word_theme, music_theme, track_list, method_used_idx), domain=tuple)
+        artifact = Artifact(self, (lyrics, word_theme, music_theme, track_list, method_name), domain=tuple)
         personal_eval, framing = self.evaluate(artifact)
         
         # Add evaluation and framing to the artifact
@@ -711,8 +715,8 @@ class MusicAgent(CreativeAgent):
                 self.learn(requested_artifact)
             
             #Read the invention method used from the artifact
-            method_idx = artifact.obj[4]
-            self.record_feedback(method_idx, their_opinion_music)
+            method_name = artifact.obj[4]
+            self.record_feedback(method_name, their_opinion_music)
             
             #Also, if the other agent didn't like this one's artifact, try once more
             if their_overall_opinion < 0.85:
@@ -782,14 +786,16 @@ class MusicAgent(CreativeAgent):
         return shared_invention_method
         
         
-    def record_feedback(self, method_idx, result):
+    def record_feedback(self, method_name, result):
         '''
         Allows an agent to be notified of feedback results so it can score its own
         invention methods
         :param int method_idx: The invention method index in its own invention_methods
         :param float vote_result: The voting result the artifact accumulated
         '''
+        method_idx = [self.invention_methods.index(im) for im in self.invention_methods if im.name ==method_name][0]
         method_used = self.invention_methods[method_idx]
+        
         times = method_used.times_utilized
         if (times == 0):
             avg = 0
