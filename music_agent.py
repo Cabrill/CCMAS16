@@ -106,7 +106,7 @@ class MusicAgent(CreativeAgent):
         
         :param artifact: :class:`~creamas.core.Artifact` to be evaluated
         '''
-        raw_text = artifact.obj[0].replace(".", "")
+        raw_text = artifact.obj[0]
                     
         # Tokenize the text into sentences.
         sentences = nltk.sent_tokenize(raw_text)
