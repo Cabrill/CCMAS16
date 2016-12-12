@@ -59,12 +59,14 @@ class MusicEnvironment(Environment):
         if len(artifacts) > 0:
             accepted = artifacts[0][0]
             accepted_value = artifacts[0][1]
+            accepted_framing = accepted.framings[accepted.creator]
+
             self.add_artifact(accepted) # Add vote winner to domain
             lyrics = accepted.obj[0]
             theme = accepted.obj[1]
             logger.info("Winning song created by: {} \nLyrics:{} \nTheme based on: {} \n(val={})"
                         .format(accepted.creator, lyrics, theme, accepted_value))
-
+            logger.info("Creator's eval: " + str(accepted_framing))
             logger.info("Tempo: " + str(accepted.obj[2][0]))
             logger.info("Tracks: "+ str(len(accepted.obj[3])))
             instr1 = MusicHelper.determine_instrument(accepted.obj[2][1][0])

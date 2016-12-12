@@ -2,7 +2,7 @@
 Contains generic methods and information (musical keys, MIDI instrument names) to be used by all
 MusicAgents in generation of their music.
 '''
-import pyknon, operator, numpy, random, nltk, math
+import pyknon, operator, numpy, random, nltk, math, re
 from os import listdir
 from os.path import isfile, join
 from pyknon.music import NoteSeq, Rest
@@ -148,6 +148,23 @@ class MusicHelper:
                 new_note_list.append(new_note)
         
         return new_note_list
+        
+    def convert_tracks_to_string(self, tracks):
+        '''
+        Changes a list of tracks or notes to a string for easy comparison to other
+        track/note lists.  Used primarily to compute levenshtein distance between tracks.
+           
+        :param list method: A list of tracks or notes
+        :returns: A string of the notes
+        '''
+        note_str = str(tracks)
+        #remove all not-note elements of the track_list in order to evaluate only the notes sequence
+        note_str = re.sub('[<>:R.#, ]', '', note_str)
+        note_str = ''.join([i for i in note_str if not i.isdigit()])
+        note_str = note_str.replace("Seq", "")
+        note_str = note_str.replace("[", "")
+        note_str = note_str.replace("]", "")
+        return note_str
         
     def derive_tracks_from_lyrics(self, lyrics, notes, track_duration, method):
         '''

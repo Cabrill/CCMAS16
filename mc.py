@@ -78,7 +78,7 @@ def likelihood(text, state_transition_probabilities):
                     #Multiply probability by next word's probability
                     probability *= next_word_prob
 
-    return probability;
+    return probability
     
 def determineOrder(state_transition_probabilities):
     '''

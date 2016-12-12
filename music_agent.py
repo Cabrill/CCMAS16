@@ -18,6 +18,7 @@ def levenshtein(s, t):
     From Wikipedia article; Iterative with two matrix rows.
     :param string: The origination string to be evaluated
     :param string: The destination string to be compared against the origination
+    :returns: The number of edits required to make one string match the other
     '''
     if s == t: return 0
     elif len(s) == 0: return len(t)
@@ -38,7 +39,7 @@ def levenshtein(s, t):
     
 class invention_method:
     '''
-    A list of functions used to generate parameters in the creation of, 
+    A list of functions used to generate parameters in the creation of music, 
     and minimal statistics about the overall invention method
     '''
     def __init__(self, method_list):
@@ -147,19 +148,6 @@ class MusicAgent(CreativeAgent):
                 self.MarkovChainProbs[pred] = {}
             for succ, count in succ_counts.items():
                 self.MarkovChainProbs[pred][succ] = count / totals[pred]
-
-    def grammar_check(self, artifact):
-        '''This is meant to be a simple way to exclude artifacts that
-        end in a word known to be invalid ending for a sentence.
-        
-        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated
-        :returns: A score of the artifact's employed grammar, from 0 to 1.
-        '''
-        score = 1
-        words = nltk.word_tokenize(artifact.obj[0])
-        if ''.join(words[-1:]) in ("and", "the", "of", "if", "their", "a", "as", "but", "or" ):
-            score = 0
-        return score
         
     def evaluate(self, artifact):
         '''Evaluate given artifact by checking its inherent value and novelty.
@@ -171,71 +159,123 @@ class MusicAgent(CreativeAgent):
         '''
         lyric_eval = self.eval_lyrics(artifact)
         music_eval = self.eval_music(artifact)
-        overall_eval = (lyric_eval + music_eval) / 2
+        
+        #Give greater weight to music eval than lyrics
+        overall_eval = (lyric_eval + music_eval*3) / 4
         
         framing = {"Overall": overall_eval, 
-            "Lyric eval": lyric_eval,
-            "Music eval": music_eval}
+            "Lyric": lyric_eval,
+            "Music": music_eval}
         
         return overall_eval, framing
         
     def eval_lyrics(self, artifact):
         '''Evaluates an artifact purely on the basis of the lyrics it contains, not paying attention to the music.
     
-        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated
-        :returns: double value from 0 to 1 representing the quality of music
+        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated
+        :returns: float value from 0 to 1 representing the quality of lyrics
         '''
-        novelty = self.lyrics_novelty(artifact)
-        probability = 1 - likelihood(artifact.obj[0], self.MarkovChainProbs)
-        grammar = self.grammar_check(artifact)
+        grammar_chk = self.eval_lyrics_grammar(artifact)
         
+        novelty_score = self.eval_lyrics_novelty(artifact)
+        prob_score = self.eval_lyrics_probability(artifact)
+        length_score = self.eval_lyrics_length(artifact)
+       
+        #Give greater evaluation to longer lyrics than to novelty or probability
+        evaluation = grammar_chk * (prob_score + novelty_score + length_score*5) / 7
+        return evaluation
+    
+    def eval_lyrics_length(self, artifact):
+        '''Evaluates the artifact on the basis of the length of the lyrics, assuming longer lyrics are better for
+        the purpose of generating music.
+        
+        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated
+        :returns: float value from 0 to 1 representing the length of lyrics
+        '''
         #Points for length diminishes as it increases, never passing 1
-        length = 0
+        length_eval = 0
         len_val = 1
         for word in nltk.word_tokenize(artifact.obj[0]):
             len_val = len_val / 2
-            length = length + len_val
-
-        #Give increased value to length so that lyrics are not too short
-        evaluation = grammar * (probability + novelty + (length*5)) / 7
-        return evaluation
+            length_eval = length_eval + len_val
         
-    def lyrics_novelty(self, artifact):
+        return length_eval
+        
+    def eval_lyrics_probability(self, artifact):
+        '''Evaluates the probability of the lyrics having occured, based off the agent's own Markov Chain.
+        
+        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated
+        :returns: float value from 0 to 1 representing the probability of the lyrics occurring
+        '''
+        probability = 1 - likelihood(artifact.obj[0], self.MarkovChainProbs)
+        return probability
+        
+    def eval_lyrics_grammar(self, artifact):
+        '''This is meant to be a simple way to exclude artifacts that
+        end in a word known to be invalid ending for a sentence.
+        
+        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated
+        :returns: A score of the artifact's employed grammar, from 0 to 1.
+        '''
+        grammar_score = 1
+        words = nltk.word_tokenize(artifact.obj[0])
+        if ''.join(words[-1:]) in ("and", "the", "of", "if", "their", "a", "as", "but", "or" ):
+            grammar_score = 0
+        return grammar_score
+        
+    def eval_lyrics_novelty(self, artifact):
         '''Assign a value for the novelty of an artifact.  This value is based one
         the similarity of the artifact to previously recorded artifacts and
         therefore represents how unique the artifact is to this agent.   
         
         :param artifact: :class:`~creamas.core.Artifact` to be evaluated
-        :returns:
-            the novelty score
+        :returns:  A score of the lyrics novelty, from 0 to 1
         '''
         # We will choose that the novelty is maximal if agent's memory is empty.
+
         if len(self.mem.artifacts) == 0:
             return 1.0
 
         novelty = 1.0
-        evaluation_word = artifact.obj[0]
-        matching_word = self.mem.artifacts[0].obj
+        evaluation_lyrics = artifact.obj[0]
+        matching_lyrics = self.mem.artifacts[0].obj[0]
         for memart in self.mem.artifacts:
-            word = memart.obj
-            lev = levenshtein(evaluation_word, word)
-            mlen = max(len(evaluation_word), float(len(word)))
+            lyrics = memart.obj[0]
+            lev = levenshtein(evaluation_lyrics, lyrics)
+            mlen = max(len(evaluation_lyrics), float(len(lyrics)))
             current_novelty = float(lev) / mlen
             if current_novelty < novelty:
                 novelty = current_novelty
-                matching_word = word
+                matching_lyrics = lyrics
                 
         return novelty
 
     def eval_music(self,artifact):
-        '''Attempts to evaluate the quality of music by looking at instrument selection
-        and pattern repetition.
+        '''
+        Attempts to evaluate the quality of music by looking at instrument selection,
+        pattern repetition (melody) and note harmony (adherence to a key).
         
         :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated
-        :returns: double value from 0 to 1 representing the quality of music
+        :returns: float value from 0 to 1 representing the quality of music
         '''
         #evaluate instruments
+        instrument_eval = self.eval_music_instruments(artifact)
+        melody_eval = self.eval_music_melody(artifact)
+        harmony_eval = self.eval_music_harmony(artifact)
 
+        eval_score = (melody_eval + instrument_eval + harmony_eval) / 3
+        
+        return eval_score
+        
+    def eval_music_instruments(self, artifact):
+        '''
+        Evaluates the choice of instruments in the music, based on the assumption that the first
+        track will lead the song, the second track will provide rhythm and the third track will
+        provide a beat.
+    
+        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated
+        :returns: float value from 0 to 1 representing the quality of instrument selection
+        '''
         #according to midi standard sounds list(see http://soundprogramming.net/file-formats/general-midi-instrument-list/) we decided:
         # Lead:
         # 1: 8, 25: 31, 41: 43, 57, 65: 72, 73: 80, 105: 112
@@ -285,20 +325,19 @@ class MusicAgent(CreativeAgent):
             inst_eval -= 2
             
         inst_eval = max(0,inst_eval / 9) #Divide by max possible, with a floor of zero
-
-        #evaluate melody
-        def sanitize_track(artifact): #remove all not-note elements of the track_list in order to evaluate only the notes sequence
-            tr_list = artifact.obj[3]
-            line = str(tr_list)
-            line = re.sub('[<>:R.#, ]', '', line)
-            line = ''.join([i for i in line if not i.isdigit()])
-            line = line.replace("Seq", "")
-            line = line.replace("[", "")
-            line = line.replace("]", "")
-            return line
-
+        
+        return inst_eval
+        
+    def eval_music_melody(self, artifact):
+        '''
+        Evaluates the melody of the music, based on the presence of patterns and how often each
+        pattern is repeated.
+    
+        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated
+        :returns: float value from 0 to 1 representing the quality of music's melody
+        '''
         minPhrase = 12 #min notes that a phrase should have
-        notes = sanitize_track(artifact) #only the notes of track_list
+        notes = self.music_helper.convert_tracks_to_string(artifact.obj[3]) #only the notes of track_list
         occur = {} #dictionary to cotain all possible phrases and their number of occurrences
         for i in range(len(notes) - minPhrase + 1):
             select = notes[i:i + minPhrase] #selected phrase to look for
@@ -316,21 +355,41 @@ class MusicAgent(CreativeAgent):
         #as a list, we can return more elements if needed
         
         #Convert these phrase counts to a 0-1 evaluation
-        eval_score = 0
+        melody_eval = 0
         ideal_count = 5
         for i in range(min(4, max(0,len(sorted_occ)-1)), 0,  -1):
             if len(sorted_occ[i]) > 1:
                 phrase_count = sorted_occ[i][1]
                 phrase_score = max(0,(ideal_count - abs(phrase_count - ideal_count)) / ideal_count) #Measures proximity to ideal
                 phrase_score = phrase_score * (0.0715 * (i+1))#This 0.0715*i gives depreceating returns for more patterns
-                eval_score = eval_score + phrase_score
+                melody_eval = melody_eval + phrase_score
         
-        eval_score = min(1, eval_score) #Correct rounding error that would result in 1.01
-
-        #add instrument eval to eval_score
-        eval_score += inst_eval
+        melody_eval = min(1, melody_eval) #Correct rounding error that would result in 1.01    
         
-        return eval_score
+        return melody_eval
+        
+    def eval_music_harmony(self, artifact):
+        '''
+        Evaluates the harmony of the music, by identifying the dominant musical key in the notes,
+        then creating a version in which all the notes adhere to that key, and then comparing
+        the difference between the original note list and the note list that conforms to the key.
+    
+        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated
+        :returns: float value from 0 to 1 representing the quality of music's harmony
+        '''
+        notes = self.music_helper.convert_tracks_to_string(artifact.obj[3]) #only the notes of track_list
+        
+        #Evaluate note harmony by comparing the notes to the ideal
+        dom_key = self.music_helper.determine_dominant_key(notes)
+        perfect_notes = self.music_helper.convert_tracks_to_string((self.music_helper.conform_notes_to_key(notes, dom_key)))
+        
+        #Harmony is equal to the distance from the actual notes to the notes in perfect harmony
+        lev_dist = levenshtein(notes, perfect_notes)
+        mlen = max(len(notes), len(perfect_notes))
+        lev_dist = lev_dist/mlen
+        harmony_eval = 1 - lev_dist
+        
+        return harmony_eval
 
     def generate_lyrics(self):
         '''Generate new text.
@@ -344,7 +403,7 @@ class MusicAgent(CreativeAgent):
         lyrics = generate(self.MarkovChainProbs, text_length)
 
         #Create an artifact containing the creations
-        tuple_artifact = (lyrics)
+        tuple_artifact = (lyrics, None)
         
         return Artifact(self, tuple_artifact, domain=tuple)
         
@@ -573,7 +632,7 @@ class MusicAgent(CreativeAgent):
                 if new_eval > max_evaluation:
                     best_lyrics = new_lyrics
                     max_evaluation = new_eval
-            lyrics = lyrics + " " + format_for_printing(best_lyrics.obj)
+            lyrics = lyrics + " " + format_for_printing(best_lyrics.obj[0])
         
         #Remove any leading or trailing spaces
         lyrics = lyrics.strip()
@@ -671,7 +730,7 @@ class MusicAgent(CreativeAgent):
         Allows an agent to be notified of feedback results so it can score its own
         invention methods
         :param int method_idx: The invention method index in its own invention_methods
-        :param double vote_result: The voting result the artifact accumulated
+        :param float vote_result: The voting result the artifact accumulated
         '''
         method_used = self.invention_methods[method_idx]
         times = method_used.times_utilized
