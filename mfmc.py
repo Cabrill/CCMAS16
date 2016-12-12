@@ -49,31 +49,60 @@ class MusicEnvironment(Environment):
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.standard=[]
 
     def vote(self, age):
         '''
         Perform the act of voting on this rounds artifacts to select the best one available
         from all participating agents.
         '''
-        artifacts = self.perform_voting(method='mean')
+        if len(self.artifacts) > 0:
+            #The after the first iteration, voting is performed using the best method.
+            artifacts = self.perform_voting(method='best')
+            #Evaluation of actual winner vs. last winner, the same agent can not win two consecutive times
+            library = self.artifacts
+            print('Library of artifacts:',library)
+            last_creator=library[-1].creator
+            print('Last creator:',last_creator)
+            print('Current creator',artifacts[0][0].creator)
+            if artifacts[0][0].creator == last_creator:
+                print('Good music, but same agent can not win two consecutive times, No winner on this round :(')
+                artifacts=[]
+            else:
+                vote_score = artifacts[0][1]
+                average=sum(self.standard)/len(self.standard)
+                print('Actual average:',average)
+                #Winner score must be always over the average of the scores of the artifacts in the library.
+                if vote_score > average:
+                    self.standard.append(vote_score)
+                    print('Winner Score:',vote_score)
+                else:
+                    print('Not enough...less that the average, No winner on this round :(')
+                    artifacts=[]
+
+        else:
+            #The first time voting is performed using the mean method.
+            artifacts = self.perform_voting(method='mean')
+            #Initialize the standard for future voting.
+            vote_score = artifacts[0][1]
+            self.standard.append(vote_score)
+            print('Winner score:',self.standard)
+
         if len(artifacts) > 0:
             accepted = artifacts[0][0]
             accepted_value = artifacts[0][1]
-            accepted_framing = accepted.framings[accepted.creator]
-
             self.add_artifact(accepted) # Add vote winner to domain
             lyrics = accepted.obj[0]
             theme = accepted.obj[1]
             logger.info("Winning song created by: {} \nLyrics:{} \nTheme based on: {} \n(val={})"
                         .format(accepted.creator, lyrics, theme, accepted_value))
-            logger.info("Creator's eval: " + str(accepted_framing))
-            logger.info("Invention method name: " + accepted.obj[4])
+
             logger.info("Tempo: " + str(accepted.obj[2][0]))
             logger.info("Tracks: "+ str(len(accepted.obj[3])))
             instr1 = MusicHelper.determine_instrument(accepted.obj[2][1][0])
             instr2 = MusicHelper.determine_instrument(accepted.obj[2][1][1])
             instr3 = MusicHelper.determine_instrument(accepted.obj[2][1][2])
-                        
+
             logger.info("Instrument 1: " + str(accepted.obj[2][1][0]+1) + " " + instr1[0] + "-" + instr1[1])
             if len(accepted.obj[3]) > 1:
                 logger.info("Instrument 2: " + str(accepted.obj[2][1][1]+1) + " " + instr2[0] + "-" + instr2[1])
@@ -83,9 +112,10 @@ class MusicEnvironment(Environment):
             logger.info("No vote winner!")
 
         self.clear_candidates()
-        file_name = self.save_midi(accepted)
-        self.play_midi(file_name)
-        input("Playing artifact's music.  Press a key for next voting round...")
+        if len(artifacts) > 0:
+            file_name = self.save_midi(accepted)
+            self.play_midi(file_name)
+            input("Playing artifact's music.  Press a key for next voting round...")
         
     def save_midi(self, artifact):
         '''
@@ -229,4 +259,4 @@ if __name__ == "__main__":
     logger.info("Initialization complete!  Starting simulation...")
     sim.async_steps(voting_rounds)
     sim.end()
-    csvFile.close()
+    #csvFile.close()
