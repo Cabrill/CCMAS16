@@ -103,12 +103,14 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">artifacts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">accepted</span> <span class="o">=</span> <span class="n">artifacts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">accepted_value</span> <span class="o">=</span> <span class="n">artifacts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">accepted_framing</span> <span class="o">=</span> <span class="n">accepted</span><span class="o">.</span><span class="n">framings</span><span class="p">[</span><span class="n">accepted</span><span class="o">.</span><span class="n">creator</span><span class="p">]</span>
+
             <span class="bp">self</span><span class="o">.</span><span class="n">add_artifact</span><span class="p">(</span><span class="n">accepted</span><span class="p">)</span> <span class="c1"># Add vote winner to domain</span>
             <span class="n">lyrics</span> <span class="o">=</span> <span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">theme</span> <span class="o">=</span> <span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Winning song created by: </span><span class="si">{}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">Lyrics:</span><span class="si">{}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">Theme based on: </span><span class="si">{}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">(val=</span><span class="si">{}</span><span class="s2">)&quot;</span>
                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">,</span> <span class="n">theme</span><span class="p">,</span> <span class="n">accepted_value</span><span class="p">))</span>
-
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Creator&#39;s eval: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">accepted_framing</span><span class="p">))</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tempo: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tracks: &quot;</span><span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">3</span><span class="p">])))</span>
             <span class="n">instr1</span> <span class="o">=</span> <span class="n">MusicHelper</span><span class="o">.</span><span class="n">determine_instrument</span><span class="p">(</span><span class="n">accepted</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
@@ -301,7 +303,7 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Sus Roy.
+      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Suravi Saha Roy.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>

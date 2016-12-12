@@ -62,6 +62,7 @@
 <span class="sd">    From Wikipedia article; Iterative with two matrix rows.</span>
 <span class="sd">    :param string: The origination string to be evaluated</span>
 <span class="sd">    :param string: The destination string to be compared against the origination</span>
+<span class="sd">    :returns: The number of edits required to make one string match the other</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="n">t</span><span class="p">:</span> <span class="k">return</span> <span class="mi">0</span>
     <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
@@ -82,7 +83,7 @@
     
 <div class="viewcode-block" id="invention_method"><a class="viewcode-back" href="../music_agent.html#music_agent.invention_method">[docs]</a><span class="k">class</span> <span class="nc">invention_method</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    A list of functions used to generate parameters in the creation of, </span>
+<span class="sd">    A list of functions used to generate parameters in the creation of music, </span>
 <span class="sd">    and minimal statistics about the overall invention method</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_list</span><span class="p">):</span>
@@ -191,19 +192,6 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">succ</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">succ_counts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">[</span><span class="n">pred</span><span class="p">][</span><span class="n">succ</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span> <span class="o">/</span> <span class="n">totals</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span></div>
-
-<div class="viewcode-block" id="MusicAgent.grammar_check"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.grammar_check">[docs]</a>    <span class="k">def</span> <span class="nf">grammar_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;This is meant to be a simple way to exclude artifacts that</span>
-<span class="sd">        end in a word known to be invalid ending for a sentence.</span>
-<span class="sd">        </span>
-<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated</span>
-<span class="sd">        :returns: A score of the artifact&#39;s employed grammar, from 0 to 1.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">score</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">words</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">if</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;and&quot;</span><span class="p">,</span> <span class="s2">&quot;the&quot;</span><span class="p">,</span> <span class="s2">&quot;of&quot;</span><span class="p">,</span> <span class="s2">&quot;if&quot;</span><span class="p">,</span> <span class="s2">&quot;their&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;as&quot;</span><span class="p">,</span> <span class="s2">&quot;but&quot;</span><span class="p">,</span> <span class="s2">&quot;or&quot;</span> <span class="p">):</span>
-            <span class="n">score</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">return</span> <span class="n">score</span></div>
         
 <div class="viewcode-block" id="MusicAgent.evaluate"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Evaluate given artifact by checking its inherent value and novelty.</span>
@@ -215,71 +203,123 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">lyric_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_lyrics</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
         <span class="n">music_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_music</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
-        <span class="n">overall_eval</span> <span class="o">=</span> <span class="p">(</span><span class="n">lyric_eval</span> <span class="o">+</span> <span class="n">music_eval</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        
+        <span class="c1">#Give greater weight to music eval than lyrics</span>
+        <span class="n">overall_eval</span> <span class="o">=</span> <span class="p">(</span><span class="n">lyric_eval</span> <span class="o">+</span> <span class="n">music_eval</span><span class="o">*</span><span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span>
         
         <span class="n">framing</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Overall&quot;</span><span class="p">:</span> <span class="n">overall_eval</span><span class="p">,</span> 
-            <span class="s2">&quot;Lyric eval&quot;</span><span class="p">:</span> <span class="n">lyric_eval</span><span class="p">,</span>
-            <span class="s2">&quot;Music eval&quot;</span><span class="p">:</span> <span class="n">music_eval</span><span class="p">}</span>
+            <span class="s2">&quot;Lyric&quot;</span><span class="p">:</span> <span class="n">lyric_eval</span><span class="p">,</span>
+            <span class="s2">&quot;Music&quot;</span><span class="p">:</span> <span class="n">music_eval</span><span class="p">}</span>
         
         <span class="k">return</span> <span class="n">overall_eval</span><span class="p">,</span> <span class="n">framing</span></div>
         
 <div class="viewcode-block" id="MusicAgent.eval_lyrics"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_lyrics">[docs]</a>    <span class="k">def</span> <span class="nf">eval_lyrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Evaluates an artifact purely on the basis of the lyrics it contains, not paying attention to the music.</span>
 <span class="sd">    </span>
-<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated</span>
-<span class="sd">        :returns: double value from 0 to 1 representing the quality of music</span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated</span>
+<span class="sd">        :returns: float value from 0 to 1 representing the quality of lyrics</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">novelty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lyrics_novelty</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
-        <span class="n">probability</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">likelihood</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">)</span>
-        <span class="n">grammar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grammar_check</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="n">grammar_chk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_lyrics_grammar</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
         
+        <span class="n">novelty_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_lyrics_novelty</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="n">prob_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_lyrics_probability</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="n">length_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_lyrics_length</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+       
+        <span class="c1">#Give greater evaluation to longer lyrics than to novelty or probability</span>
+        <span class="n">evaluation</span> <span class="o">=</span> <span class="n">grammar_chk</span> <span class="o">*</span> <span class="p">(</span><span class="n">prob_score</span> <span class="o">+</span> <span class="n">novelty_score</span> <span class="o">+</span> <span class="n">length_score</span><span class="o">*</span><span class="mi">5</span><span class="p">)</span> <span class="o">/</span> <span class="mi">7</span>
+        <span class="k">return</span> <span class="n">evaluation</span></div>
+    
+<div class="viewcode-block" id="MusicAgent.eval_lyrics_length"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_lyrics_length">[docs]</a>    <span class="k">def</span> <span class="nf">eval_lyrics_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Evaluates the artifact on the basis of the length of the lyrics, assuming longer lyrics are better for</span>
+<span class="sd">        the purpose of generating music.</span>
+<span class="sd">        </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated</span>
+<span class="sd">        :returns: float value from 0 to 1 representing the length of lyrics</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="c1">#Points for length diminishes as it increases, never passing 1</span>
-        <span class="n">length</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">length_eval</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">len_val</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
             <span class="n">len_val</span> <span class="o">=</span> <span class="n">len_val</span> <span class="o">/</span> <span class="mi">2</span>
-            <span class="n">length</span> <span class="o">=</span> <span class="n">length</span> <span class="o">+</span> <span class="n">len_val</span>
-
-        <span class="c1">#Give increased value to length so that lyrics are not too short</span>
-        <span class="n">evaluation</span> <span class="o">=</span> <span class="n">grammar</span> <span class="o">*</span> <span class="p">(</span><span class="n">probability</span> <span class="o">+</span> <span class="n">novelty</span> <span class="o">+</span> <span class="p">(</span><span class="n">length</span><span class="o">*</span><span class="mi">5</span><span class="p">))</span> <span class="o">/</span> <span class="mi">7</span>
-        <span class="k">return</span> <span class="n">evaluation</span></div>
+            <span class="n">length_eval</span> <span class="o">=</span> <span class="n">length_eval</span> <span class="o">+</span> <span class="n">len_val</span>
         
-<div class="viewcode-block" id="MusicAgent.lyrics_novelty"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.lyrics_novelty">[docs]</a>    <span class="k">def</span> <span class="nf">lyrics_novelty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">length_eval</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.eval_lyrics_probability"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_lyrics_probability">[docs]</a>    <span class="k">def</span> <span class="nf">eval_lyrics_probability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Evaluates the probability of the lyrics having occured, based off the agent&#39;s own Markov Chain.</span>
+<span class="sd">        </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated</span>
+<span class="sd">        :returns: float value from 0 to 1 representing the probability of the lyrics occurring</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">probability</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">likelihood</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">probability</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.eval_lyrics_grammar"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_lyrics_grammar">[docs]</a>    <span class="k">def</span> <span class="nf">eval_lyrics_grammar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;This is meant to be a simple way to exclude artifacts that</span>
+<span class="sd">        end in a word known to be invalid ending for a sentence.</span>
+<span class="sd">        </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the lyrics to be evaluated</span>
+<span class="sd">        :returns: A score of the artifact&#39;s employed grammar, from 0 to 1.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">grammar_score</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">word_tokenize</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;and&quot;</span><span class="p">,</span> <span class="s2">&quot;the&quot;</span><span class="p">,</span> <span class="s2">&quot;of&quot;</span><span class="p">,</span> <span class="s2">&quot;if&quot;</span><span class="p">,</span> <span class="s2">&quot;their&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;as&quot;</span><span class="p">,</span> <span class="s2">&quot;but&quot;</span><span class="p">,</span> <span class="s2">&quot;or&quot;</span> <span class="p">):</span>
+            <span class="n">grammar_score</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">grammar_score</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.eval_lyrics_novelty"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_lyrics_novelty">[docs]</a>    <span class="k">def</span> <span class="nf">eval_lyrics_novelty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Assign a value for the novelty of an artifact.  This value is based one</span>
 <span class="sd">        the similarity of the artifact to previously recorded artifacts and</span>
 <span class="sd">        therefore represents how unique the artifact is to this agent.   </span>
 <span class="sd">        </span>
 <span class="sd">        :param artifact: :class:`~creamas.core.Artifact` to be evaluated</span>
-<span class="sd">        :returns:</span>
-<span class="sd">            the novelty score</span>
+<span class="sd">        :returns:  A score of the lyrics novelty, from 0 to 1</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="c1"># We will choose that the novelty is maximal if agent&#39;s memory is empty.</span>
+
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="mf">1.0</span>
 
         <span class="n">novelty</span> <span class="o">=</span> <span class="mf">1.0</span>
-        <span class="n">evaluation_word</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">matching_word</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">obj</span>
+        <span class="n">evaluation_lyrics</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">matching_lyrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">memart</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem</span><span class="o">.</span><span class="n">artifacts</span><span class="p">:</span>
-            <span class="n">word</span> <span class="o">=</span> <span class="n">memart</span><span class="o">.</span><span class="n">obj</span>
-            <span class="n">lev</span> <span class="o">=</span> <span class="n">levenshtein</span><span class="p">(</span><span class="n">evaluation_word</span><span class="p">,</span> <span class="n">word</span><span class="p">)</span>
-            <span class="n">mlen</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">evaluation_word</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)))</span>
+            <span class="n">lyrics</span> <span class="o">=</span> <span class="n">memart</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">lev</span> <span class="o">=</span> <span class="n">levenshtein</span><span class="p">(</span><span class="n">evaluation_lyrics</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">)</span>
+            <span class="n">mlen</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">evaluation_lyrics</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)))</span>
             <span class="n">current_novelty</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">lev</span><span class="p">)</span> <span class="o">/</span> <span class="n">mlen</span>
             <span class="k">if</span> <span class="n">current_novelty</span> <span class="o">&lt;</span> <span class="n">novelty</span><span class="p">:</span>
                 <span class="n">novelty</span> <span class="o">=</span> <span class="n">current_novelty</span>
-                <span class="n">matching_word</span> <span class="o">=</span> <span class="n">word</span>
+                <span class="n">matching_lyrics</span> <span class="o">=</span> <span class="n">lyrics</span>
                 
         <span class="k">return</span> <span class="n">novelty</span></div>
 
 <div class="viewcode-block" id="MusicAgent.eval_music"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_music">[docs]</a>    <span class="k">def</span> <span class="nf">eval_music</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">artifact</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Attempts to evaluate the quality of music by looking at instrument selection</span>
-<span class="sd">        and pattern repetition.</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attempts to evaluate the quality of music by looking at instrument selection,</span>
+<span class="sd">        pattern repetition (melody) and note harmony (adherence to a key).</span>
 <span class="sd">        </span>
 <span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated</span>
-<span class="sd">        :returns: double value from 0 to 1 representing the quality of music</span>
+<span class="sd">        :returns: float value from 0 to 1 representing the quality of music</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="c1">#evaluate instruments</span>
+        <span class="n">instrument_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_music_instruments</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="n">melody_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_music_melody</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="n">harmony_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_music_harmony</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
 
+        <span class="n">eval_score</span> <span class="o">=</span> <span class="p">(</span><span class="n">melody_eval</span> <span class="o">+</span> <span class="n">instrument_eval</span> <span class="o">+</span> <span class="n">harmony_eval</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span>
+        
+        <span class="k">return</span> <span class="n">eval_score</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.eval_music_instruments"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_music_instruments">[docs]</a>    <span class="k">def</span> <span class="nf">eval_music_instruments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Evaluates the choice of instruments in the music, based on the assumption that the first</span>
+<span class="sd">        track will lead the song, the second track will provide rhythm and the third track will</span>
+<span class="sd">        provide a beat.</span>
+<span class="sd">    </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated</span>
+<span class="sd">        :returns: float value from 0 to 1 representing the quality of instrument selection</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="c1">#according to midi standard sounds list(see http://soundprogramming.net/file-formats/general-midi-instrument-list/) we decided:</span>
         <span class="c1"># Lead:</span>
         <span class="c1"># 1: 8, 25: 31, 41: 43, 57, 65: 72, 73: 80, 105: 112</span>
@@ -329,20 +369,19 @@
             <span class="n">inst_eval</span> <span class="o">-=</span> <span class="mi">2</span>
             
         <span class="n">inst_eval</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">inst_eval</span> <span class="o">/</span> <span class="mi">9</span><span class="p">)</span> <span class="c1">#Divide by max possible, with a floor of zero</span>
-
-        <span class="c1">#evaluate melody</span>
-        <span class="k">def</span> <span class="nf">sanitize_track</span><span class="p">(</span><span class="n">artifact</span><span class="p">):</span> <span class="c1">#remove all not-note elements of the track_list in order to evaluate only the notes sequence</span>
-            <span class="n">tr_list</span> <span class="o">=</span> <span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
-            <span class="n">line</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">tr_list</span><span class="p">)</span>
-            <span class="n">line</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;[&lt;&gt;:R.#, ]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
-            <span class="n">line</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">line</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()])</span>
-            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Seq&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">line</span>
-
+        
+        <span class="k">return</span> <span class="n">inst_eval</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.eval_music_melody"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_music_melody">[docs]</a>    <span class="k">def</span> <span class="nf">eval_music_melody</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Evaluates the melody of the music, based on the presence of patterns and how often each</span>
+<span class="sd">        pattern is repeated.</span>
+<span class="sd">    </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated</span>
+<span class="sd">        :returns: float value from 0 to 1 representing the quality of music&#39;s melody</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">minPhrase</span> <span class="o">=</span> <span class="mi">12</span> <span class="c1">#min notes that a phrase should have</span>
-        <span class="n">notes</span> <span class="o">=</span> <span class="n">sanitize_track</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span> <span class="c1">#only the notes of track_list</span>
+        <span class="n">notes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">convert_tracks_to_string</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="c1">#only the notes of track_list</span>
         <span class="n">occur</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1">#dictionary to cotain all possible phrases and their number of occurrences</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">notes</span><span class="p">)</span> <span class="o">-</span> <span class="n">minPhrase</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
             <span class="n">select</span> <span class="o">=</span> <span class="n">notes</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">minPhrase</span><span class="p">]</span> <span class="c1">#selected phrase to look for</span>
@@ -360,21 +399,41 @@
         <span class="c1">#as a list, we can return more elements if needed</span>
         
         <span class="c1">#Convert these phrase counts to a 0-1 evaluation</span>
-        <span class="n">eval_score</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">melody_eval</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">ideal_count</span> <span class="o">=</span> <span class="mi">5</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_occ</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="mi">0</span><span class="p">,</span>  <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_occ</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">phrase_count</span> <span class="o">=</span> <span class="n">sorted_occ</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
                 <span class="n">phrase_score</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,(</span><span class="n">ideal_count</span> <span class="o">-</span> <span class="nb">abs</span><span class="p">(</span><span class="n">phrase_count</span> <span class="o">-</span> <span class="n">ideal_count</span><span class="p">))</span> <span class="o">/</span> <span class="n">ideal_count</span><span class="p">)</span> <span class="c1">#Measures proximity to ideal</span>
                 <span class="n">phrase_score</span> <span class="o">=</span> <span class="n">phrase_score</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.0715</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="c1">#This 0.0715*i gives depreceating returns for more patterns</span>
-                <span class="n">eval_score</span> <span class="o">=</span> <span class="n">eval_score</span> <span class="o">+</span> <span class="n">phrase_score</span>
+                <span class="n">melody_eval</span> <span class="o">=</span> <span class="n">melody_eval</span> <span class="o">+</span> <span class="n">phrase_score</span>
         
-        <span class="n">eval_score</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">eval_score</span><span class="p">)</span> <span class="c1">#Correct rounding error that would result in 1.01</span>
-
-        <span class="c1">#add instrument eval to eval_score</span>
-        <span class="n">eval_score</span> <span class="o">+=</span> <span class="n">inst_eval</span>
+        <span class="n">melody_eval</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">melody_eval</span><span class="p">)</span> <span class="c1">#Correct rounding error that would result in 1.01    </span>
         
-        <span class="k">return</span> <span class="n">eval_score</span></div>
+        <span class="k">return</span> <span class="n">melody_eval</span></div>
+        
+<div class="viewcode-block" id="MusicAgent.eval_music_harmony"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.eval_music_harmony">[docs]</a>    <span class="k">def</span> <span class="nf">eval_music_harmony</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artifact</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Evaluates the harmony of the music, by identifying the dominant musical key in the notes,</span>
+<span class="sd">        then creating a version in which all the notes adhere to that key, and then comparing</span>
+<span class="sd">        the difference between the original note list and the note list that conforms to the key.</span>
+<span class="sd">    </span>
+<span class="sd">        :param artifact: :class:`~creamas.core.Artifact` containing the music to be evaluated</span>
+<span class="sd">        :returns: float value from 0 to 1 representing the quality of music&#39;s harmony</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">notes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">convert_tracks_to_string</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="c1">#only the notes of track_list</span>
+        
+        <span class="c1">#Evaluate note harmony by comparing the notes to the ideal</span>
+        <span class="n">dom_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">determine_dominant_key</span><span class="p">(</span><span class="n">notes</span><span class="p">)</span>
+        <span class="n">perfect_notes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">convert_tracks_to_string</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">music_helper</span><span class="o">.</span><span class="n">conform_notes_to_key</span><span class="p">(</span><span class="n">notes</span><span class="p">,</span> <span class="n">dom_key</span><span class="p">)))</span>
+        
+        <span class="c1">#Harmony is equal to the distance from the actual notes to the notes in perfect harmony</span>
+        <span class="n">lev_dist</span> <span class="o">=</span> <span class="n">levenshtein</span><span class="p">(</span><span class="n">notes</span><span class="p">,</span> <span class="n">perfect_notes</span><span class="p">)</span>
+        <span class="n">mlen</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">notes</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">perfect_notes</span><span class="p">))</span>
+        <span class="n">lev_dist</span> <span class="o">=</span> <span class="n">lev_dist</span><span class="o">/</span><span class="n">mlen</span>
+        <span class="n">harmony_eval</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">lev_dist</span>
+        
+        <span class="k">return</span> <span class="n">harmony_eval</span></div>
 
 <div class="viewcode-block" id="MusicAgent.generate_lyrics"><a class="viewcode-back" href="../music_agent.html#music_agent.MusicAgent.generate_lyrics">[docs]</a>    <span class="k">def</span> <span class="nf">generate_lyrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Generate new text.</span>
@@ -388,7 +447,7 @@
         <span class="n">lyrics</span> <span class="o">=</span> <span class="n">generate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MarkovChainProbs</span><span class="p">,</span> <span class="n">text_length</span><span class="p">)</span>
 
         <span class="c1">#Create an artifact containing the creations</span>
-        <span class="n">tuple_artifact</span> <span class="o">=</span> <span class="p">(</span><span class="n">lyrics</span><span class="p">)</span>
+        <span class="n">tuple_artifact</span> <span class="o">=</span> <span class="p">(</span><span class="n">lyrics</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">Artifact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tuple_artifact</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="nb">tuple</span><span class="p">)</span></div>
         
@@ -617,7 +676,7 @@
                 <span class="k">if</span> <span class="n">new_eval</span> <span class="o">&gt;</span> <span class="n">max_evaluation</span><span class="p">:</span>
                     <span class="n">best_lyrics</span> <span class="o">=</span> <span class="n">new_lyrics</span>
                     <span class="n">max_evaluation</span> <span class="o">=</span> <span class="n">new_eval</span>
-            <span class="n">lyrics</span> <span class="o">=</span> <span class="n">lyrics</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">format_for_printing</span><span class="p">(</span><span class="n">best_lyrics</span><span class="o">.</span><span class="n">obj</span><span class="p">)</span>
+            <span class="n">lyrics</span> <span class="o">=</span> <span class="n">lyrics</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">format_for_printing</span><span class="p">(</span><span class="n">best_lyrics</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         
         <span class="c1">#Remove any leading or trailing spaces</span>
         <span class="n">lyrics</span> <span class="o">=</span> <span class="n">lyrics</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
@@ -715,7 +774,7 @@
 <span class="sd">        Allows an agent to be notified of feedback results so it can score its own</span>
 <span class="sd">        invention methods</span>
 <span class="sd">        :param int method_idx: The invention method index in its own invention_methods</span>
-<span class="sd">        :param double vote_result: The voting result the artifact accumulated</span>
+<span class="sd">        :param float vote_result: The voting result the artifact accumulated</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">method_used</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invention_methods</span><span class="p">[</span><span class="n">method_idx</span><span class="p">]</span>
         <span class="n">times</span> <span class="o">=</span> <span class="n">method_used</span><span class="o">.</span><span class="n">times_utilized</span>
@@ -756,7 +815,7 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Sus Roy.
+      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Suravi Saha Roy.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>

@@ -108,9 +108,77 @@ into separate tracks, choosing a theme based on the text and then matching the t
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the music to be evaluated</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the lyrics to be evaluated</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">double value from 0 to 1 representing the quality of music</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">float value from 0 to 1 representing the quality of lyrics</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="music_agent.MusicAgent.eval_lyrics_grammar">
+<code class="descname">eval_lyrics_grammar</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.eval_lyrics_grammar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.eval_lyrics_grammar" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is meant to be a simple way to exclude artifacts that
+end in a word known to be invalid ending for a sentence.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the lyrics to be evaluated</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A score of the artifact&#8217;s employed grammar, from 0 to 1.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="music_agent.MusicAgent.eval_lyrics_length">
+<code class="descname">eval_lyrics_length</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.eval_lyrics_length"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.eval_lyrics_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates the artifact on the basis of the length of the lyrics, assuming longer lyrics are better for
+the purpose of generating music.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the lyrics to be evaluated</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">float value from 0 to 1 representing the length of lyrics</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="music_agent.MusicAgent.eval_lyrics_novelty">
+<code class="descname">eval_lyrics_novelty</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.eval_lyrics_novelty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.eval_lyrics_novelty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign a value for the novelty of an artifact.  This value is based one
+the similarity of the artifact to previously recorded artifacts and
+therefore represents how unique the artifact is to this agent.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> to be evaluated</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A score of the lyrics novelty, from 0 to 1</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="music_agent.MusicAgent.eval_lyrics_probability">
+<code class="descname">eval_lyrics_probability</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.eval_lyrics_probability"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.eval_lyrics_probability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates the probability of the lyrics having occured, based off the agent&#8217;s own Markov Chain.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the lyrics to be evaluated</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">float value from 0 to 1 representing the probability of the lyrics occurring</td>
 </tr>
 </tbody>
 </table>
@@ -119,15 +187,68 @@ into separate tracks, choosing a theme based on the text and then matching the t
 <dl class="method">
 <dt id="music_agent.MusicAgent.eval_music">
 <code class="descname">eval_music</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.eval_music"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.eval_music" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attempts to evaluate the quality of music by looking at instrument selection
-and pattern repetition.</p>
+<dd><p>Attempts to evaluate the quality of music by looking at instrument selection,
+pattern repetition (melody) and note harmony (adherence to a key).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the music to be evaluated</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">double value from 0 to 1 representing the quality of music</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">float value from 0 to 1 representing the quality of music</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="music_agent.MusicAgent.eval_music_harmony">
+<code class="descname">eval_music_harmony</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.eval_music_harmony"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.eval_music_harmony" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates the harmony of the music, by identifying the dominant musical key in the notes,
+then creating a version in which all the notes adhere to that key, and then comparing
+the difference between the original note list and the note list that conforms to the key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the music to be evaluated</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">float value from 0 to 1 representing the quality of music&#8217;s harmony</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="music_agent.MusicAgent.eval_music_instruments">
+<code class="descname">eval_music_instruments</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.eval_music_instruments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.eval_music_instruments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates the choice of instruments in the music, based on the assumption that the first
+track will lead the song, the second track will provide rhythm and the third track will
+provide a beat.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the music to be evaluated</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">float value from 0 to 1 representing the quality of instrument selection</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="music_agent.MusicAgent.eval_music_melody">
+<code class="descname">eval_music_melody</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.eval_music_melody"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.eval_music_melody" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates the melody of the music, based on the presence of patterns and how often each
+pattern is repeated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the music to be evaluated</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">float value from 0 to 1 representing the quality of music&#8217;s melody</td>
 </tr>
 </tbody>
 </table>
@@ -167,23 +288,6 @@ in <code class="docutils literal"><span class="pre">wlen_limits</span></code>.</
 </dd></dl>
 
 <dl class="method">
-<dt id="music_agent.MusicAgent.grammar_check">
-<code class="descname">grammar_check</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.grammar_check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.grammar_check" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is meant to be a simple way to exclude artifacts that
-end in a word known to be invalid ending for a sentence.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> containing the lyrics to be evaluated</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A score of the artifact&#8217;s employed grammar, from 0 to 1.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
 <dt id="music_agent.MusicAgent.invent">
 <code class="descname">invent</code><span class="sig-paren">(</span><em>n=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.invent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.invent" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invents a new song</p>
@@ -217,24 +321,6 @@ in the supplied artifact.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="music_agent.MusicAgent.lyrics_novelty">
-<code class="descname">lyrics_novelty</code><span class="sig-paren">(</span><em>artifact</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.lyrics_novelty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.lyrics_novelty" title="Permalink to this definition">¶</a></dt>
-<dd><p>Assign a value for the novelty of an artifact.  This value is based one
-the similarity of the artifact to previously recorded artifacts and
-therefore represents how unique the artifact is to this agent.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>artifact</strong> &#8211; <code class="xref py py-class docutils literal"><span class="pre">Artifact</span></code> to be evaluated</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the novelty score</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
 <dt id="music_agent.MusicAgent.reconsider_invention_methods">
 <code class="descname">reconsider_invention_methods</code><span class="sig-paren">(</span><em>lyrics</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#MusicAgent.reconsider_invention_methods"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.MusicAgent.reconsider_invention_methods" title="Permalink to this definition">¶</a></dt>
 <dd><p>Allows an agent to create new invention methods, or replace a poorly performing method.
@@ -247,7 +333,7 @@ therefore represents how unique the artifact is to this agent.</p>
 <dd><p>Allows an agent to be notified of feedback results so it can score its own
 invention methods
 :param int method_idx: The invention method index in its own invention_methods
-:param double vote_result: The voting result the artifact accumulated</p>
+:param float vote_result: The voting result the artifact accumulated</p>
 </dd></dl>
 
 <dl class="method">
@@ -273,7 +359,7 @@ for their opinion on the artifact, and an artifact of their own.</p>
 <dt id="music_agent.invention_method">
 <em class="property">class </em><code class="descclassname">music_agent.</code><code class="descname">invention_method</code><span class="sig-paren">(</span><em>method_list</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/music_agent.html#invention_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#music_agent.invention_method" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<p>A list of functions used to generate parameters in the creation of, 
+<p>A list of functions used to generate parameters in the creation of music, 
 and minimal statistics about the overall invention method</p>
 </dd></dl>
 
@@ -283,7 +369,8 @@ and minimal statistics about the overall invention method</p>
 <dd><p>Compute the edit distance between two strings.</p>
 <p>From Wikipedia article; Iterative with two matrix rows.
 :param string: The origination string to be evaluated
-:param string: The destination string to be compared against the origination</p>
+:param string: The destination string to be compared against the origination
+:returns: The number of edits required to make one string match the other</p>
 </dd></dl>
 
 </div>
@@ -322,7 +409,7 @@ and minimal statistics about the overall invention method</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Sus Roy.
+      &copy;2016, Jared Bagley, Agustin Zuñiga Corrales, Jose Carlos Alcantara Beltran, Suravi Saha Roy.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5</a>
