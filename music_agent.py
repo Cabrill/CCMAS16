@@ -439,22 +439,14 @@ class MusicAgent(CreativeAgent):
         lyric_words = nltk.word_tokenize(lyrics)
         
         #Find a word that will provide a theme for the song
-        music_theme = None
-        '''
-        for i in range(0, len(lyric_words)):
-            if music_theme != None:
-                break
-            word_theme = lyric_words[i]
-            if len(word_theme) > 2:
-                music_theme = self.music_helper.determine_theme(word_theme)
-                '''
-        #No matching words were found, choose one at random
-        if music_theme == None:
-            word_theme = random.choice([word for word in lyric_words if len(word) > 4])
-            tempo = max(120,invention_method.method_list[0](lyrics) * invention_method.method_list[4](lyrics) % 600)
-            instr1 = (invention_method.method_list[0](lyrics) * invention_method.method_list[3](lyrics)) % 127
-            instr2 = (invention_method.method_list[1](lyrics) * invention_method.method_list[2](lyrics)) % 127
-            instr3 = (invention_method.method_list[4](lyrics) * invention_method.method_list[0](lyrics)) % 127
+        word_theme = random.choice([word for word in lyric_words if len(word) > 4])
+        if word_theme == None:
+            self.music_helper.determine_theme("random")
+        else:
+            tempo = max(120,invention_method.method_list[0](word_theme) * invention_method.method_list[4](word_theme) % 600)
+            instr1 = (invention_method.method_list[0](word_theme) * invention_method.method_list[3](word_theme)) % 127
+            instr2 = (invention_method.method_list[1](word_theme) * invention_method.method_list[2](word_theme)) % 127
+            instr3 = (invention_method.method_list[4](word_theme) * invention_method.method_list[0](word_theme)) % 127
             music_theme = (tempo, [instr1, instr2, instr3])
 
         track_list = []
