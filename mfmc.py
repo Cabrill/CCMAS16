@@ -84,6 +84,7 @@ class MusicEnvironment(Environment):
                     print('Not enough...less that the average, No winner on this round... :(')
                     print('Declaring winner using the mean method... :)')
                     artifacts = self.perform_voting(method='mean')
+                    vote_score = artifacts[0][1]
                     self.standard.append(vote_score)
 
 
