@@ -179,45 +179,42 @@ def read_text(self, mypath="InspiringSet/"):
     text_files = [f  for f in listdir(mypath) if isfile(join(mypath, f)) and str(f).endswith(".txt")]
     return text_files
     
-if __name__ == "__main__":  
-    #Read in any supplied user arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--agents", help="The number of concurrent agents to simulate.  DEFAULT: 5", type=int)
-    parser.add_argument("-p", "--path", help="The location of the inspiring set of TXT files. DEFAULT: InspiringSet", type=str)
-    parser.add_argument("-o", "--order", help="The order of Markov Chain to use in lyric generation.  DEFAULT: 2", type=str)
-    parser.add_argument("-r", "--rounds", help="The number of voting rounds to simulate.  DEFAULT: 1000", type=int)
-    parser.add_argument("-m", "--memory", help="The number of seen artifacts an agent can remember.  DEFAULT: 20", type=int)
-    args = parser.parse_args()
-    
+if __name__ == "__main__":
+    #Set Defaults
     #Set Inspiring Set path (location of TXT files)
-    if args.path:
-        path = args.path
-    else:
-        path = "InspiringSet/"
+    path = "InspiringSet/"
     
     #Set the number of agents
-    if args.agents:
-        num_agents = args.agents
-    else:
-        num_agents = 5
+    num_agents = 5
         
     #Set the Markov Chain order
-    if args.order:
-        order = args.order
-    else:
-        order = 2
+    order = 2
     
     #Set the memory list length
-    if args.memory:
-        list_memory = memory
-    else:
-        list_memory = 20
+    list_memory = 20
         
     #Set the number of rounds
+    voting_rounds = 1000
+
+    #Read in any supplied user arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-a", "--agents", help="The number of concurrent agents to simulate.  DEFAULT: " + str(num_agents), type=int)
+    parser.add_argument("-p", "--path", help="The location of the inspiring set of TXT files. DEFAULT: " + path, type=str)
+    parser.add_argument("-o", "--order", help="The order of Markov Chain to use in lyric generation.  DEFAULT: " + str(order), type=str)
+    parser.add_argument("-r", "--rounds", help="The number of voting rounds to simulate.  DEFAULT: " + str(voting_rounds), type=int)
+    parser.add_argument("-m", "--memory", help="The number of seen artifacts an agent can remember.  DEFAULT: " + str(list_memory), type=int)
+    args = parser.parse_args()
+
+    if args.path:
+        path = args.path
+    if args.agents:
+        num_agents = args.agents
+    if args.order:
+        order = args.order
+    if args.memory:
+        list_memory = memory
     if args.rounds:
         voting_rounds = args.rounds
-    else:
-        voting_rounds = 1000
         
     logger.info("Initializing environment and agent data...")
     
@@ -252,11 +249,11 @@ if __name__ == "__main__":
             textmc, textst = markov_chain(text_read, True, order)
             
             for i in range(0, agents_per_text):
-                if len(env.get_agents()) < num_agents:
+                if len(env.get_agents())-1 < num_agents:
                     print("Creating an agent for " + text_file)
                     MusicAgent(env, textmc, textst, helper, list_memory, server.addr)
     
-    while len(env.get_agents()) < num_agents:
+    while len(env.get_agents())-1 < num_agents:
         print("Creating leftover agents for " + text_file)
         MusicAgent(env, textmc, textst, helper, list_memory, server.addr)
 
