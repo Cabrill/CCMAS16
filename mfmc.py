@@ -59,26 +59,32 @@ class MusicEnvironment(Environment):
         if len(self.artifacts) > 0:
             #The after the first iteration, voting is performed using the best method.
             artifacts = self.perform_voting(method='best')
-            #Evaluation of actual winner vs. last winner, the same agent can not win two consecutive times
+            #Evaluation of actual winner vs. last winner, the same agent can not win three consecutive times
             library = self.artifacts
             print('Library of artifacts:',library)
             last_creator=library[-1].creator
+            if len(self.artifacts) > 1:
+                llast_creator=library[-2].creator
+            else:
+                llast_creator='tcp://localhost:5555/0'
             print('Last creator:',last_creator)
             print('Current creator',artifacts[0][0].creator)
-            if artifacts[0][0].creator == last_creator:
-                print('Good music, but same agent can not win two consecutive times, No winner on this round :(')
+            if (artifacts[0][0].creator == last_creator) and (artifacts[0][0].creator == llast_creator) :
+                print('Good music, but same agent can not win three consecutive times, No winner on this round :(')
                 artifacts=[]
             else:
                 vote_score = artifacts[0][1]
                 average=sum(self.standard)/len(self.standard)
                 print('Actual average:',average)
-                #Winner score must be always over the average of the scores of the artifacts in the library.
+                #Winner score must be always over the average of the scores of the artifacts in the library, if not the voting is define by the mean method.
                 if vote_score > average:
                     self.standard.append(vote_score)
                     print('Winner Score:',vote_score)
                 else:
-                    print('Not enough...less that the average, No winner on this round :(')
-                    artifacts=[]
+                    print('Not enough...less that the average, No winner on this round... :(')
+                    print('Declaring winner using the mean method... :)')
+                    artifacts = self.perform_voting(method='mean')
+
 
         else:
             #The first time voting is performed using the mean method.
