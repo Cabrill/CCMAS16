@@ -443,7 +443,7 @@ class MusicAgent(CreativeAgent):
         if word_theme == None:
             self.music_helper.determine_theme("random")
         else:
-            tempo = max(120,invention_method.method_list[0](word_theme) * invention_method.method_list[4](word_theme) % 600)
+            tempo = max(120,invention_method.method_list[0](word_theme) * invention_method.method_list[4](word_theme) % 400)
             instr1 = (invention_method.method_list[0](word_theme) * invention_method.method_list[3](word_theme)) % 127
             instr2 = (invention_method.method_list[1](word_theme) * invention_method.method_list[2](word_theme)) % 127
             instr3 = (invention_method.method_list[4](word_theme) * invention_method.method_list[0](word_theme)) % 127
